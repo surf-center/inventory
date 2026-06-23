@@ -408,7 +408,7 @@
   <div id="loginView" class="centerWrap">
     <img src="./logo.png" alt="Logo" class="logo" onerror="this.style.display='none';">
     <div class="loginCard">
-      <div style="font-weight:700; margin-bottom:10px;">Inloggen</div>
+      <div style="font-weight:700; margin-bottom:10px;">Login</div>
       <input id="loginKey" class="input" placeholder="Key" autocomplete="off" autocapitalize="off" spellcheck="false">
       <div style="display:flex; gap:10px; margin-top:12px;">
         <button id="loginBtn" class="btn btnPrimary" style="flex:1;">Login</button>
@@ -423,7 +423,7 @@
       <div></div>
       <div style="display:flex; gap:10px; align-items:center;">
         <button id="accountBtn" class="btn">Account</button>
-        <button id="logoutBtn" class="btn">Log uit</button>
+        <button id="logoutBtn" class="btn">Log out</button>
       </div>
     </div>
 
@@ -432,17 +432,17 @@
     <div class="searchArea">
       <!-- Row 1: product / EAN search -->
       <div class="searchRow">
-        <input id="searchInput" class="input" placeholder="Zoek product of EAN‚Ä¶" disabled>
+        <input id="searchInput" class="input" placeholder="Search product or EAN‚Ä¶" disabled>
       </div>
       <!-- Row 2: category + supplier dropdowns -->
       <div class="filterRow">
         <select id="filterCategory" class="filterSelect" disabled>
-          <option value="">Alle categorie√´n</option>
+          <option value="">All categories</option>
         </select>
         <select id="filterSupplier" class="filterSelect" disabled>
-          <option value="">Alle leveranciers</option>
+          <option value="">All suppliers</option>
         </select>
-        <button id="clearFiltersBtn" class="btn" style="flex-shrink:0; display:none;">Wis filters</button>
+        <button id="clearFiltersBtn" class="btn" style="flex-shrink:0; display:none;">Clear filters</button>
       </div>
       <div id="activeFilters" class="activeFilters"></div>
     </div>
@@ -457,16 +457,16 @@
           <thead>
             <tr>
               <th>Product</th>
-              <th>Leverancier</th>
+              <th>Supplier</th>
               <th>Retail price</th>
-              <th>Eigen stock<br><span class="small" style="font-weight:300;">Surfcenter</span></th>
-              <th>Warehouse stock<br><span class="small" style="font-weight:300;">Alle andere bronnen</span></th>
-              <th>Totaal</th>
+              <th>Stock<br><span class="small" style="font-weight:300;">Surfcenter</span></th>
+              <th>Warehouse stock<br><span class="small" style="font-weight:300;">All other sources</span></th>
+              <th>Total</th>
               <th style="text-align:right;"></th>
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr><td colspan="7" class="small">Laden‚Ä¶</td></tr>
+            <tr><td colspan="7" class="small">Loading‚Ä¶</td></tr>
           </tbody>
         </table>
       </div>
@@ -498,7 +498,7 @@
       <div class="modalHeader">
         <span>Enter details</span>
         <div class="actions">
-          <button id="cartClose" class="btn">Sluiten</button>
+          <button id="cartClose" class="btn">Close</button>
         </div>
       </div>
       <div class="modalBody">
@@ -523,8 +523,8 @@
         <div style="margin-top:14px; font-weight:700;">Items:</div>
         <div id="cartList" class="cartList"></div>
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px; flex-wrap:wrap;">
-          <button id="clearCartBtn" class="btn">Leegmaken</button>
-          <button id="saveLeadBtn" class="btn btnPrimary">Opslaan</button>
+          <button id="clearCartBtn" class="btn">Clear</button>
+          <button id="saveLeadBtn" class="btn btnPrimary">Save</button>
         </div>
         <div id="cartErr" class="err"></div>
         <div id="cartTick" class="tick" style="display:none;">
@@ -540,13 +540,13 @@
       <div class="modalHeader">
         <span id="accountTitle">Account</span>
         <div class="actions">
-          <button id="accountClose" class="btn">Sluiten</button>
+          <button id="accountClose" class="btn">Close</button>
         </div>
       </div>
       <div class="modalBody">
         <div class="muted" id="accountSub" style="margin-bottom:10px;"></div>
         <div class="card desktopOnly">
-          <div style="font-weight:700; margin-bottom:8px;">Leads overzicht</div>
+          <div style="font-weight:700; margin-bottom:8px;">Leads overview</div>
           <div class="tableWrap">
             <table style="min-width:820px;">
               <thead>
@@ -557,13 +557,13 @@
                 </tr>
               </thead>
               <tbody id="accountOrdersTbody">
-                <tr><td colspan="6" class="small">Laden‚Ä¶</td></tr>
+                <tr><td colspan="6" class="small">Loading‚Ä¶</td></tr>
               </tbody>
             </table>
           </div>
         </div>
         <div class="mobileOnly">
-          <div style="font-weight:700; margin-bottom:10px;">Leads overzicht</div>
+          <div style="font-weight:700; margin-bottom:10px;">Leads overview</div>
           <div id="mobileLeads" class="productList"></div>
         </div>
         <div id="accountErr" class="err"></div>
@@ -577,7 +577,7 @@
       <div class="modalHeader">
         <span>Calculator</span>
         <div class="actions">
-          <button id="calcClose" class="btn">Sluiten</button>
+          <button id="calcClose" class="btn">Close</button>
         </div>
       </div>
       <div class="modalBody">
@@ -844,7 +844,7 @@
 
     function renderCart(){
       if(!cart.length){
-        cartListEl.innerHTML = `<div class="cartRow"><div class="small">Geen items.</div></div>`;
+        cartListEl.innerHTML = `<div class="cartRow"><div class="small">No items.</div></div>`;
         return;
       }
       cartListEl.innerHTML = cart.map(it => `
@@ -918,7 +918,7 @@
       accountErr.textContent = "";
       accountOverlay.classList.add("active");
       accountTitle.textContent = currentUserName || "Account";
-      accountSub.textContent = isAdmin ? "Surfcenter: alle leads" : "Jouw leads";
+      accountSub.textContent = isAdmin ? "Surfcenter: all leads" : "Your leads";
       loadAccountOrders();
     }
     function closeAccountFn(){ accountOverlay.classList.remove("active"); }
@@ -928,16 +928,16 @@
 
     async function loadAccountOrders(){
       accountErr.textContent = "";
-      accountOrdersTbody.innerHTML = `<tr><td colspan="6" class="small">Laden‚Ä¶</td></tr>`;
+      accountOrdersTbody.innerHTML = `<tr><td colspan="6" class="small">Loading‚Ä¶</td></tr>`;
       mobileLeads.innerHTML = "";
       const scope = isAdmin ? "all" : "mine";
       try{
         const res = await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=orders&scope=${scope}&key=${encodeURIComponent(currentKey)}`);
-        if(!res||!res.ok) throw new Error(res?.error||"Kon leads niet laden");
+        if(!res||!res.ok) throw new Error(res?.error||"Could not load leads");
         const orders = Array.isArray(res.orders) ? res.orders : [];
         if(!orders.length){
-          accountOrdersTbody.innerHTML = `<tr><td colspan="6" class="small">Geen leads.</td></tr>`;
-          mobileLeads.innerHTML = `<div class="small">Geen leads.</div>`;
+          accountOrdersTbody.innerHTML = `<tr><td colspan="6" class="small">No leads.</td></tr>`;
+          mobileLeads.innerHTML = `<div class="small">No leads.</div>`;
           return;
         }
         accountOrdersTbody.innerHTML = orders.map(o => `
@@ -977,24 +977,24 @@
             const id = btn.getAttribute("data-toggle-lead");
             const details = document.getElementById(id);
             const isOpen = details.classList.toggle("open");
-            btn.textContent = isOpen ? "‚àí" : "+";
+            btn.textContent = isOpen ? "-" : "+";
           });
         });
       }catch(e){
         accountErr.textContent = e.message;
-        accountOrdersTbody.innerHTML = `<tr><td colspan="6" class="small">Fout.</td></tr>`;
-        mobileLeads.innerHTML = `<div class="small">Fout.</div>`;
+        accountOrdersTbody.innerHTML = `<tr><td colspan="6" class="small">Error.</td></tr>`;
+        mobileLeads.innerHTML = `<div class="small">Error.</div>`;
       }
     }
 
     // ---- Products ----
     async function loadProducts(){
       err.textContent = "";
-      meta.textContent = "Laden‚Ä¶";
-      tbody.innerHTML = `<tr><td colspan="7" class="small">Data laden‚Ä¶</td></tr>`;
-      mobileProducts.innerHTML = `<div class="small">Laden‚Ä¶</div>`;
+      meta.textContent = "Loading‚Ä¶";
+      tbody.innerHTML = `<tr><td colspan="7" class="small">Loading‚Ä¶</td></tr>`;
+      mobileProducts.innerHTML = `<div class="small">Loading‚Ä¶</div>`;
       const res = await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=data&key=${encodeURIComponent(currentKey)}`);
-      if(!res||!res.ok) throw new Error(res?.error||"Kon data niet laden");
+      if(!res||!res.ok) throw new Error(res?.error||"Could not load data");
       isAdmin = !!res.isAdmin;
       currentUserName = (res.user&&res.user.name) ? res.user.name : "";
       accountBtn.textContent = currentUserName || "Account";
@@ -1015,7 +1015,7 @@
 
       // Update meta count
       if(f.category||f.supplier||f.q){
-        meta.textContent = `${rows.length} van ${allRows.length} items`;
+        meta.textContent = `${rows.length} of ${allRows.length} items`;
       } else {
         meta.textContent = `${allRows.length} items`;
       }
@@ -1023,7 +1023,7 @@
       // ---- Desktop table ----
       tbody.innerHTML = "";
       if(!rows.length){
-        tbody.innerHTML = `<tr><td colspan="7" class="small">Geen resultaten.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="small">No results.</td></tr>`;
       } else {
         rows.forEach((r,i)=>{
           const id = `${r.ean_code}__${i}`;
@@ -1052,7 +1052,7 @@
 
           const infoBtn = document.createElement("button");
           infoBtn.className = "btn";
-          infoBtn.textContent = expanded.has(id) ? "Sluit" : "Info";
+          infoBtn.textContent = expanded.has(id) ? "Close" : "Info";
           infoBtn.onclick = ()=>{ expanded.has(id)?expanded.delete(id):expanded.add(id); renderProducts(); };
 
           const calcBtn = document.createElement("button");
@@ -1086,12 +1086,11 @@
             td.innerHTML = `
               <div class="kv" style="grid-template-columns:150px 1fr;">
                 <div class="k">EAN</div><div class="v">${esc(r.ean_code||"")}</div>
-                <div class="k">Leverancier</div><div class="v">${esc(r.manufacturer||"")}</div>
-                <div class="k">Categorie</div><div class="v">${esc(r._attribute_set||"")}</div>
+                <div class="k">Supplier</div><div class="v">${esc(r.manufacturer||"")}</div>
+                <div class="k">Category</div><div class="v">${esc(r._attribute_set||"")}</div>
                 <div class="k">Season</div><div class="v">${esc(r.season||"")}</div>
                 <div class="k">Retail price</div><div class="v">${esc(fmtPrice(r.retailPrice))}</div>
-                <div class="k">Purchase price</div><div class="v">${esc(fmtPrice(r.purchasePrice))}</div>
-                <div class="k">Eigen stock (SC)</div><div class="v">${own}</div>
+                <div class="k">Stock (SC)</div><div class="v">${own}</div>
                 <div class="k">Warehouse detail</div><div class="v">${whDetail}</div>
               </div>
             `;
@@ -1103,7 +1102,7 @@
 
       // ---- Mobile cards ----
       if(!rows.length){
-        mobileProducts.innerHTML = `<div class="small">Geen resultaten.</div>`;
+        mobileProducts.innerHTML = `<div class="small">No results.</div>`;
         return;
       }
 
@@ -1125,20 +1124,19 @@
             <div class="pRow">
               <div class="pName"><span class="stockDot ${dc}"></span>${esc(r.name||"")}</div>
               <div class="pActions">
-                <button class="btn pToggle" data-toggle="${id}">${open?"Sluit":"Info"}</button>
+                <button class="btn pToggle" data-toggle="${id}">${open?"Close":"Info"}</button>
                 <button class="btnCalc" data-calc="${id}" title="Open calculator">%</button>
                 <button class="btn btnPrimary pTiny" data-add="${id}">Add</button>
               </div>
             </div>
             <div class="pDetails ${open?"open":""}" id="${id}">
               <div class="kv">
-                <div class="k">Leverancier</div><div class="v">${esc(r.manufacturer||"-")}</div>
-                <div class="k">Categorie</div><div class="v">${esc(r._attribute_set||"-")}</div>
+                <div class="k">Supplier</div><div class="v">${esc(r.manufacturer||"-")}</div>
+                <div class="k">Category</div><div class="v">${esc(r._attribute_set||"-")}</div>
                 <div class="k">Retail price</div><div class="v">${esc(fmtPrice(r.retailPrice))}</div>
-                <div class="k">Purchase price</div><div class="v">${esc(fmtPrice(r.purchasePrice))}</div>
-                <div class="k">Eigen stock (SC)</div><div class="v">${own}</div>
+                <div class="k">Stock (SC)</div><div class="v">${own}</div>
                 <div class="k">Warehouse stock</div><div class="v">${wh}</div>
-                <div class="k">Totaal</div><div class="v">${tot}</div>
+                <div class="k">Total</div><div class="v">${tot}</div>
                 <div class="k">Warehouse detail</div><div class="v"><div class="whBreakdown">${whDetail}</div></div>
                 <div class="k">Season</div><div class="v">${esc(r.season||"-")}</div>
                 <div class="k">EAN</div><div class="v">${esc(r.ean_code||"-")}</div>
@@ -1185,26 +1183,26 @@
       const p = phone.value.trim();
       const m = mail.value.trim();
       const n1 = note1.value.trim();
-      if(!name){ cartErr.textContent = "Name is verplicht."; return; }
-      if(!p&&!m){ cartErr.textContent = "Minimaal Phone number of Mail is verplicht."; return; }
+      if(!name){ cartErr.textContent = "Name is required."; return; }
+      if(!p&&!m){ cartErr.textContent = "Phone number or mail is required."; return; }
       if(!cart.length){ cartErr.textContent = "Cart is leeg."; return; }
       const payload = { name, phoneNumber:p, mail:m, note1:n1, items:cart };
       const url = `${APPS_SCRIPT_WEBAPP_URL}?action=submitLead&key=${encodeURIComponent(currentKey)}&payload=${encodeURIComponent(JSON.stringify(payload))}`;
       saveLeadBtn.disabled = true;
-      saveLeadBtn.textContent = "Opslaan‚Ä¶";
+      saveLeadBtn.textContent = "Saving‚Ä¶";
       try{
         const res = await jsonp(url);
-        if(!res||!res.ok) throw new Error(res?.error||"Opslaan mislukt");
+        if(!res||!res.ok) throw new Error(res?.error||"Save failed");
         cart=[];
         setCartBadge();
         renderCart();
         custName.value=""; phone.value=""; mail.value=""; note1.value="";
         cartTick.style.display="";
       }catch(e){
-        cartErr.textContent = "Fout bij opslaan: "+e.message;
+        cartErr.textContent = "Error saving: "+e.message;
       }finally{
         saveLeadBtn.disabled=false;
-        saveLeadBtn.textContent="Opslaan";
+        saveLeadBtn.textContent="Save";
       }
     };
 
@@ -1212,12 +1210,12 @@
     loginBtn.onclick = async () => {
       loginErr.textContent = "";
       const key = loginKey.value.trim();
-      if(!key){ loginErr.textContent = "Vul een key in."; return; }
+      if(!key){ loginErr.textContent = "Please enter a key."; return; }
       loginBtn.disabled = true;
       loginBtn.textContent = "Login‚Ä¶";
       try{
         const res = await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=data&key=${encodeURIComponent(key)}`);
-        if(!res||!res.ok) throw new Error(res?.error||"Login mislukt");
+        if(!res||!res.ok) throw new Error(res?.error||"Login failed");
         localStorage.setItem("employeeKey", key);
         currentKey = key;
         showApp();
