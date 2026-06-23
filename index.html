@@ -60,12 +60,12 @@
       display:block;
       width:min(560px,100%);
       height:auto;
-      max-height:68px;
+      max-height:90px;
       object-fit:contain;
-      margin:16px auto 16px;
+      margin:24px auto 20px;
     }
     @media (max-width:480px){
-      .logo{ max-height:56px; margin:12px auto 12px; }
+      .logo{ max-height:70px; margin:18px auto 16px; }
     }
 
     .btn{
@@ -995,24 +995,48 @@
     }
 
     // ---- Products ----
-    async function loadProducts(){
-      err.textContent = "";
-      meta.textContent = "Loading...";
-      tbody.innerHTML = `<tr><td colspan="5" class="small">Loading...</td></tr>`;
-      mobileProducts.innerHTML = `<div class="small">Loading...</div>`;
-      const res = await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=data&key=${encodeURIComponent(currentKey)}`);
-      if(!res||!res.ok) throw new Error(res?.error||"Could not load data");
+    const CACHE_KEY = "sc_products_cache";
+
+    function applyData(res, fromCache){
       isAdmin = !!res.isAdmin;
       currentUserName = (res.user&&res.user.name) ? res.user.name : "";
       accountBtn.textContent = currentUserName || "Account";
       allRows = Array.isArray(res.rows) ? res.rows : [];
       expanded.clear();
       mobileExpanded.clear();
-      meta.textContent = `${allRows.length} items`;
+      meta.textContent = `${allRows.length} items` + (fromCache ? " (cached)" : "");
       searchInput.disabled = false;
       populateDropdowns();
       updateActiveFilters();
       renderProducts();
+    }
+
+    async function loadProducts(){
+      err.textContent = "";
+
+      // Show cached data immediately if available
+      const cached = localStorage.getItem(CACHE_KEY);
+      if(cached){
+        try{
+          const c = JSON.parse(cached);
+          if(c.key === currentKey){
+            applyData(c.res, true);
+          }
+        }catch(e){}
+      } else {
+        meta.textContent = "Loading...";
+        tbody.innerHTML = `<tr><td colspan="5" class="small">Loading...</td></tr>`;
+        mobileProducts.innerHTML = `<div class="small">Loading...</div>`;
+      }
+
+      // Always fetch fresh in background
+      const res = await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=data&key=${encodeURIComponent(currentKey)}`);
+      if(!res||!res.ok) throw new Error(res?.error||"Could not load data");
+
+      // Save to cache
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ key: currentKey, res }));
+
+      applyData(res, false);
     }
 
     function renderProducts(){
