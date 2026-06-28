@@ -575,22 +575,33 @@
       populateDropdowns(); updateActiveFilters(); renderProducts();
     }
 
+    const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
     async function loadProducts(){
       err.textContent="";
       const cached=localStorage.getItem(CACHE_KEY);
       let hasCache=false;
+      let cacheIsFresh=false;
       if(cached){
-        try{ const c=JSON.parse(cached); if(c.key===currentKey){ applyData(c.res,true); hasCache=true; } }catch(e){}
+        try{
+          const c=JSON.parse(cached);
+          if(c.key===currentKey){
+            applyData(c.res,true);
+            hasCache=true;
+            if(c.ts && (Date.now()-c.ts)<CACHE_TTL_MS) cacheIsFresh=true;
+          }
+        }catch(e){}
       }
       if(!hasCache){
         meta.textContent="Loading...";
         tbody.innerHTML=`<tr><td colspan="5" class="small">Loading...</td></tr>`;
         mobileProducts.innerHTML=`<div class="small">Loading...</div>`;
       }
+      if(cacheIsFresh) return; // skip fetch, cache is recent enough
       try{
         const res=await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=data&key=${encodeURIComponent(currentKey)}`);
         if(!res||!res.ok)throw new Error(res?.error||"Could not load data");
-        localStorage.setItem(CACHE_KEY,JSON.stringify({key:currentKey,res}));
+        localStorage.setItem(CACHE_KEY,JSON.stringify({key:currentKey,res,ts:Date.now()}));
         applyData(res,false);
       }catch(e){
         if(!hasCache){
@@ -728,3 +739,4 @@
   </script>
 </body>
 </html>
+
