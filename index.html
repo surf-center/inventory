@@ -1,720 +1,780 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Sales</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --border:#e5e7eb; --muted:#6b7280; --bg:#fff; --soft:#f9fafb;
-      --accent:#111827; --ok:#0f7b2f; --bad:#b00020;
+/***************************************
+ * Delivery Overview – Apps Script (v4.1)
+ ***************************************/
+
+const DROPSHIP_SHEET = "Sheet1";
+const INVOICE_SHEET = "Sheet2";
+const SUPPLIERS_SHEET = "Suppliers";
+const ACCOUNTMANAGER_SHEET = "Accountmanager";
+const MASTER_KEYS = ["SC76", "Jasper"];
+const MASTER_NAME = "Jasper";
+const INDEP_TPL_SHEET = "Mail templates";
+const CUSTOMER_TPL_SHEET = "Customer";
+const SUPPLIER_TPL_SHEET = "Supplier";
+const INVOICE_TPL_SHEET = "Mail Templates 2";
+const CUSTOMER2_TPL_SHEET = "Customer 2";
+const AFTERSALES_TPL_SHEET = "Mail Templates 3";
+const MAIL_LOG_SHEET = "Mail log";
+const MAIL_LOG_2_SHEET = "Mail log 2";
+const MODE_DROPSHIP = "dropshipment";
+const MODE_INVOICE = "invoice";
+const LOGIN_MASTER = "master";
+const LOGIN_SUPPLIER = "supplier";
+const LOGIN_ACCOUNTMANAGER = "accountmanager";
+
+const HD = {
+  customer: "Customer",
+  mailCustomer: "Mail Customer",
+  supplier: "Supplier",
+  supplierKey: "Supplier KEY",
+  carrier: "Carrier",
+  trackingNumber: "Trackingnumber",
+  trackingLink: "Trackinglink",
+  dropOrder: "Dropshipment order",
+  surfOrder: "Surfcenter order",
+  completed: "Completed",
+};
+
+const HI = {
+  customer: "Customer",
+  mailCustomer: "Mail Customer",
+  accountmanager: "Accountmanager",
+  surfOrder: "Surfcenter order",
+  trackingLink: "Trackinglink",
+  trackingNumber: "Trackingnumber",
+  carrier: "Carrier",
+  completed: "Completed",
+  language: "Language",
+};
+
+function doGet(e) {
+  try {
+    const action = String(e?.parameter?.action || "").trim().toLowerCase();
+    if (action === "auth") return authGet_(e);
+    if (action === "suppliers") return listSuppliers_(e);
+    if (action === "accountmanagers") return listAccountmanagers_(e);
+    if (action === "orders") return listOrders_(e);
+    if (action === "update") return updateTrackingGet_(e);
+    if (action === "create") return createOrderGet_(e);
+    if (action === "complete") return setCompletedGet_(e);
+    if (action === "indep_templates") return listTemplates_(e, INDEP_TPL_SHEET, [LOGIN_MASTER]);
+    if (action === "indep_upsert") return upsertTemplate_(e, INDEP_TPL_SHEET, 10, [LOGIN_MASTER]);
+    if (action === "customer_templates") return listTemplates_(e, CUSTOMER_TPL_SHEET, [LOGIN_MASTER]);
+    if (action === "customer_upsert") return upsertTemplate_(e, CUSTOMER_TPL_SHEET, null, [LOGIN_MASTER]);
+    if (action === "supplier_templates") return listTemplates_(e, SUPPLIER_TPL_SHEET, [LOGIN_MASTER]);
+    if (action === "supplier_upsert") return upsertTemplate_(e, SUPPLIER_TPL_SHEET, null, [LOGIN_MASTER]);
+    if (action === "invoice_templates") return listTemplates_(e, INVOICE_TPL_SHEET, [LOGIN_MASTER]);
+    if (action === "invoice_template_upsert") return upsertTemplate_(e, INVOICE_TPL_SHEET, null, [LOGIN_MASTER]);
+    if (action === "customer2_templates") return listTemplates_(e, CUSTOMER2_TPL_SHEET, [LOGIN_MASTER]);
+    if (action === "customer2_upsert") return upsertTemplate_(e, CUSTOMER2_TPL_SHEET, null, [LOGIN_MASTER]);
+    if (action === "aftersales_templates") {
+      return listTemplates_(e, AFTERSALES_TPL_SHEET, [LOGIN_MASTER, LOGIN_ACCOUNTMANAGER]);
     }
-    *{ box-sizing:border-box; }
-    body{ margin:0; font-family:'Poppins',system-ui,sans-serif; font-weight:300; background:#fcfcfc; color:#111; }
-
-    input,textarea{ background:#fff; color:#111; -webkit-text-fill-color:#111; transition:background-color 9999s ease-in-out 0s; }
-    input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus,textarea:-webkit-autofill{
-      -webkit-text-fill-color:#111 !important; box-shadow:0 0 0px 1000px #fff inset !important; caret-color:#111 !important;
+    if (action === "aftersales_template_upsert") {
+      return upsertTemplate_(e, AFTERSALES_TPL_SHEET, null, [LOGIN_MASTER, LOGIN_ACCOUNTMANAGER]);
     }
+    if (action === "log_mail") return logMail_(e);
+    if (action === "mail_log") return listMailLog_(e);
+    return output_({ ok: false, error: "Unknown action", gotAction: action }, e);
+  } catch (err) {
+    return output_({ ok: false, error: String(err && err.message ? err.message : err) }, e);
+  }
+}
 
-    #loginView{ display:block; }
-    #appView{ display:none; }
+/* =========================
+ * AUTH
+ * ========================= */
+function authGet_(e) {
+  const supplierKey = String(e?.parameter?.supplierKey || "").trim();
+  if (!supplierKey) return output_({ ok: false, error: "Missing supplierKey" }, e);
+  if (MASTER_KEYS.includes(supplierKey)) {
+    return output_({
+      ok: true,
+      loginType: LOGIN_MASTER,
+      supplier: MASTER_NAME,
+      accountmanager: "",
+      mailAccountmanager: "",
+    }, e);
+  }
+  const supplierName = findSupplierByKey_(supplierKey);
+  if (supplierName) {
+    return output_({
+      ok: true,
+      loginType: LOGIN_SUPPLIER,
+      supplier: supplierName,
+      accountmanager: "",
+      mailAccountmanager: "",
+    }, e);
+  }
+  const am = findAccountmanagerByKey_(supplierKey);
+  if (am) {
+    return output_({
+      ok: true,
+      loginType: LOGIN_ACCOUNTMANAGER,
+      supplier: "",
+      accountmanager: am.accountmanager,
+      mailAccountmanager: am.mailAccountmanager,
+    }, e);
+  }
+  return output_({ ok: false, error: "Invalid key" }, e);
+}
 
-    .centerWrap{ max-width:520px; margin:0 auto; padding:34px 18px 28px; text-align:center; }
-    .wrap{ max-width:1300px; margin:0 auto; padding:16px 18px 120px; }
-    @media(max-width:480px){ .centerWrap{ padding:20px 14px 16px; } .wrap{ padding:10px 12px 110px; } }
+/* =========================
+ * LISTS
+ * ========================= */
+function listSuppliers_(e) {
+  requireRoles_(e, [LOGIN_MASTER]);
+  const sh = suppliersSheet_();
+  const values = sh.getDataRange().getValues();
+  if (values.length < 2) {
+    return output_({ ok: true, suppliers: [], mailMap: {}, keyMap: {} }, e);
+  }
+  const suppliers = [];
+  const mailMap = {};
+  const keyMap = {};
+  for (let i = 1; i < values.length; i++) {
+    const supplier = String(values[i][0] || "").trim();
+    const mail = String(values[i][1] || "").trim();
+    const key = String(values[i][2] || "").trim();
+    if (!supplier) continue;
+    suppliers.push(supplier);
+    if (mail) mailMap[supplier.toLowerCase()] = mail;
+    if (key) keyMap[supplier.toLowerCase()] = key;
+  }
+  return output_({ ok: true, suppliers, mailMap, keyMap }, e);
+}
 
-    .logo{ display:block; width:min(520px,100%); height:auto; max-height:90px; object-fit:contain; margin:24px auto 20px; }
-    @media(max-width:480px){ .logo{ max-height:70px; margin:16px auto 14px; } }
+function listAccountmanagers_(e) {
+  requireRoles_(e, [LOGIN_MASTER]);
+  const sh = accountmanagerSheet_();
+  const values = sh.getDataRange().getValues();
+  if (values.length < 2) {
+    return output_({ ok: true, accountmanagers: [], mailMap: {} }, e);
+  }
+  const accountmanagers = [];
+  const mailMap = {};
+  for (let i = 1; i < values.length; i++) {
+    const name = String(values[i][0] || "").trim();
+    const mail = String(values[i][1] || "").trim();
+    if (!name) continue;
+    accountmanagers.push(name);
+    if (mail) mailMap[name.toLowerCase()] = mail;
+  }
+  return output_({ ok: true, accountmanagers, mailMap }, e);
+}
 
-    .btn{
-      font-family:'Poppins',sans-serif; font-weight:500; padding:10px 14px;
-      border-radius:14px; border:1px solid var(--border); background:#fff;
-      cursor:pointer; white-space:nowrap; color:#111; appearance:none; -webkit-appearance:none;
+/* =========================
+ * ORDERS
+ * ========================= */
+function listOrders_(e) {
+  const mode = normalizeMode_(e?.parameter?.mode);
+  const auth = resolveAuthFromKey_(e);
+  if (!auth.ok) return output_(auth, e);
+  return mode === MODE_DROPSHIP
+    ? listDropshipOrders_(e, auth)
+    : listInvoiceOrders_(e, auth);
+}
+
+function listDropshipOrders_(e, auth) {
+  if (auth.loginType === LOGIN_ACCOUNTMANAGER) {
+    return output_({ ok: true, orders: [] }, e);
+  }
+  const sh = dropshipSheet_();
+  const { rows, idx } = read_(sh);
+  mustHave_(idx, [
+    HD.customer,
+    HD.supplier,
+    HD.carrier,
+    HD.trackingNumber,
+    HD.trackingLink,
+    HD.dropOrder,
+    HD.surfOrder,
+    HD.completed,
+  ]);
+  const hasMailCustomer = idx[HD.mailCustomer] !== undefined;
+  const supplierMailMap = buildSupplierMailMap_();
+  const supplierKeyMap = buildSupplierKeyMap_();
+  const orders = [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowSupplier = String(row[idx[HD.supplier]] || "").trim();
+    if (auth.loginType === LOGIN_SUPPLIER && rowSupplier.toLowerCase() !== auth.supplier.toLowerCase()) {
+      continue;
     }
-    .btn:hover{ background:#f3f4f6; }
-    .btnPrimary{ background:var(--accent); color:#fff; border-color:var(--accent); }
-    .btnPrimary:hover{ opacity:.92; background:var(--accent); }
-
-    .btnCalc{
-      font-family:'Poppins',sans-serif; font-weight:700; padding:10px 12px;
-      border-radius:14px; border:1px solid var(--border); background:#fff; color:#111;
-      cursor:pointer; line-height:1; appearance:none; -webkit-appearance:none; -webkit-tap-highlight-color:transparent;
-    }
-    .btnCalc:hover{ background:#f3f4f6; }
-
-    .input{
-      width:100%; padding:12px 14px; border-radius:16px; border:1px solid var(--border);
-      font-family:'Poppins',sans-serif; font-weight:500; font-size:16px; background:#fff;
-    }
-
-    .filterSelect{
-      padding:12px 14px; border-radius:16px; border:1px solid var(--border);
-      font-family:'Poppins',sans-serif; font-weight:500; font-size:16px;
-      background:#fff; color:#111; appearance:none; -webkit-appearance:none;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat:no-repeat; background-position:right 12px center; padding-right:36px; cursor:pointer;
-    }
-    .filterSelect:focus{ outline:none; border-color:#9ca3af; }
-
-    .muted{ color:var(--muted); font-size:13px; font-weight:300; }
-    .err{ color:var(--bad); font-size:13px; margin-top:8px; text-align:left; }
-
-    .loginCard{ background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:16px; text-align:left; }
-
-    .topbar{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:6px 0 10px; }
-
-    .searchArea{ display:flex; flex-direction:column; gap:8px; margin:6px 0 12px; }
-    .searchRow{ display:flex; gap:8px; align-items:center; }
-    .searchRow .input{ flex:1; }
-    .filterRow{ display:flex; gap:8px; flex-wrap:wrap; }
-    .filterRow .filterSelect{ flex:1; min-width:120px; }
-
-    .activeFilters{ display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
-    .filterChip{
-      display:inline-flex; align-items:center; gap:5px; padding:3px 10px 3px 12px;
-      border-radius:999px; background:#f3f4f6; border:1px solid var(--border); font-size:12px; font-weight:500;
-    }
-    .filterChip button{ border:none; background:none; cursor:pointer; padding:0; font-size:14px; line-height:1; color:var(--muted); }
-
-    .card{ background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:12px; }
-
-    .tableWrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
-    table{ width:100%; border-collapse:collapse; font-size:14px; min-width:720px; }
-    th{ padding:10px; border-bottom:1px solid #eee; font-weight:500; text-align:left; white-space:nowrap; }
-    td{ padding:10px; border-bottom:1px solid #f1f1f1; font-weight:300; vertical-align:top; }
-    .detailsRow td{ background:var(--soft); border-bottom:1px solid #eaeaea; }
-    .small{ font-size:12px; color:var(--muted); }
-
-    .mobileOnly{ display:none; }
-    .desktopOnly{ display:block; }
-    @media(max-width:640px){ .mobileOnly{ display:block; } .desktopOnly{ display:none; } }
-
-    /* Mobile cards - compact */
-    .productList{ display:flex; flex-direction:column; gap:8px; }
-    .pCard{ border:1px solid var(--border); border-radius:16px; background:#fff; overflow:hidden; }
-    .pRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; }
-    .pName{ font-weight:500; font-size:14px; line-height:1.2; flex:1; min-width:0; word-break:break-word; display:flex; align-items:center; }
-    .pActions{ display:flex; gap:6px; align-items:center; flex-shrink:0; }
-    .pTiny{ padding:8px 10px; border-radius:12px; font-weight:700; font-size:13px; }
-    .pToggle{ padding:8px 10px; border-radius:12px; color:#111; font-size:13px; }
-
-    .pDetails{ display:none; padding:8px 12px 12px; border-top:1px solid #eee; background:var(--soft); }
-    .pDetails.open{ display:block; }
-
-    .kv{ display:grid; grid-template-columns:110px 1fr; gap:6px 10px; font-size:13px; }
-    .k{ color:var(--muted); font-weight:500; }
-    .v{ color:#111; font-weight:300; word-break:break-word; }
-
-    .whBreakdown{ display:flex; flex-direction:column; gap:2px; }
-    .whLine{ font-size:12px; }
-
-    .stockDot{
-      display:inline-block; width:9px; height:9px; border-radius:999px;
-      margin-right:8px; vertical-align:middle; flex-shrink:0;
-    }
-    .dotGreen{ background:#16a34a; }
-    .dotOrange{ background:#f59e0b; }
-    .dotRed{ background:#ef4444; }
-
-    .tdActions{ text-align:right; white-space:nowrap; }
-    .actionWrap{ display:inline-flex; gap:8px; align-items:center; justify-content:flex-end; }
-
-    /* Show more button */
-    .showMoreWrap{ display:flex; justify-content:center; padding:14px 0 4px; }
-    .showMoreBtn{
-      font-family:'Poppins',sans-serif; font-weight:500; font-size:14px;
-      padding:10px 24px; border-radius:14px; border:1px solid var(--border);
-      background:#fff; cursor:pointer; color:#111;
-    }
-    .showMoreBtn:hover{ background:#f3f4f6; }
-
-    .overlay{
-      position:fixed; inset:0; background:rgba(0,0,0,.45);
-      display:none; align-items:center; justify-content:center; z-index:10000; padding:14px;
-    }
-    .overlay.active{ display:flex; }
-    .modal{
-      background:#fff; width:min(1100px,96vw); height:min(760px,92vh);
-      border-radius:20px; overflow:hidden; display:flex; flex-direction:column;
-    }
-    .modalHeader{
-      padding:12px 14px; border-bottom:1px solid #eee;
-      display:flex; justify-content:space-between; align-items:center; font-weight:500; gap:10px;
-    }
-    .modalHeader .actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-    .modalBody{ padding:14px; overflow:auto; }
-
-    #calcOverlay .modalBody{ padding:0; overflow:hidden; height:100%; }
-    #calcOverlay .modalBody iframe{ width:100%; height:100%; border:0; display:block; }
-
-    .formGrid{ display:grid; grid-template-columns:1fr; gap:12px; }
-    .field label{ display:block; font-size:12px; color:var(--muted); margin:0 0 5px; font-weight:500; }
-    .field input,.field textarea{
-      width:100%; padding:10px 12px; border-radius:14px; border:1px solid var(--border);
-      font-family:'Poppins',sans-serif; font-weight:500; font-size:16px; background:#fff;
-    }
-    .field textarea{ min-height:120px; resize:vertical; font-weight:300; }
-
-    .cartList{ margin:10px 0 0; border:1px solid var(--border); border-radius:16px; overflow:hidden; }
-    .cartRow{ display:flex; justify-content:space-between; gap:10px; padding:12px; border-bottom:1px solid #eee; }
-    .cartRow:last-child{ border-bottom:none; }
-    .cartRow .left{ display:flex; flex-direction:column; gap:3px; }
-
-    .tick{
-      display:inline-flex; align-items:center; gap:8px; padding:10px 12px;
-      border:1px solid rgba(15,123,47,.25); background:rgba(15,123,47,.06);
-      border-radius:14px; color:var(--ok); font-weight:500; margin-top:12px;
-    }
-    .tick .dot{
-      width:22px; height:22px; border-radius:50%; display:inline-flex;
-      align-items:center; justify-content:center; background:var(--ok); color:#fff; font-weight:700;
-    }
-
-    .cartFab{
-      position:fixed; left:18px; bottom:18px; height:56px; padding:0 16px; border-radius:999px;
-      background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; gap:10px;
-      cursor:pointer; box-shadow:0 10px 25px rgba(0,0,0,.25); z-index:9999; user-select:none;
-      font-family:'Poppins',sans-serif; font-weight:700;
-    }
-    .cartFab .badge{
-      display:inline-flex; align-items:center; justify-content:center;
-      min-width:30px; height:30px; padding:0 9px; border-radius:999px;
-      background:#fff; color:#111; font-weight:700; font-size:13px;
-    }
-
-    .cartBar{
-      display:none; position:fixed; left:0; right:0; bottom:0;
-      padding:10px 14px; background:rgba(252,252,252,.92); border-top:1px solid var(--border);
-      backdrop-filter:blur(10px); z-index:9999;
-      padding-bottom:calc(10px + env(safe-area-inset-bottom));
-    }
-    .cartBarInner{ max-width:1300px; margin:0 auto; display:flex; gap:10px; align-items:center; }
-    .cartBarBtn{
-      width:100%; height:50px; border-radius:16px; background:var(--accent); color:#fff;
-      border:1px solid var(--accent); font-family:'Poppins',sans-serif; font-weight:700; font-size:16px;
-      display:flex; align-items:center; justify-content:center; gap:10px;
-      appearance:none; -webkit-appearance:none;
-    }
-    .cartBarBtn .badge{
-      display:inline-flex; align-items:center; justify-content:center;
-      min-width:26px; height:26px; padding:0 8px; border-radius:999px;
-      background:#fff; color:#111; font-weight:700; font-size:13px;
-    }
-    @media(max-width:640px){ .cartBar{ display:block; } .cartFab{ display:none !important; } }
-  </style>
-</head>
-<body>
-
-  <!-- LOGIN -->
-  <div id="loginView" class="centerWrap">
-    <img src="./logo.png" alt="Logo" class="logo" onerror="this.style.display='none';">
-    <div class="loginCard">
-      <div style="font-weight:700; margin-bottom:10px;">Login</div>
-      <input id="loginKey" class="input" placeholder="Key" autocomplete="off" autocapitalize="off" spellcheck="false">
-      <div style="display:flex; gap:10px; margin-top:12px;">
-        <button id="loginBtn" class="btn btnPrimary" style="flex:1;">Login</button>
-      </div>
-      <div id="loginErr" class="err"></div>
-    </div>
-  </div>
-
-  <!-- APP -->
-  <div id="appView" class="wrap">
-    <div class="topbar">
-      <div></div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <button id="accountBtn" class="btn">Account</button>
-        <button id="logoutBtn" class="btn" title="Log out" style="padding:9px 11px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <img src="./logo.png" alt="Logo" class="logo" onerror="this.style.display='none';">
-
-    <div class="searchArea">
-      <div class="searchRow">
-        <input id="searchInput" class="input" placeholder="Search product or EAN..." disabled>
-      </div>
-      <div class="filterRow">
-        <select id="filterCategory" class="filterSelect" disabled><option value="">All categories</option></select>
-        <select id="filterSupplier" class="filterSelect" disabled><option value="">All suppliers</option></select>
-        <select id="filterSeason" class="filterSelect" disabled><option value="">All seasons</option></select>
-        <button id="clearFiltersBtn" class="btn" style="flex-shrink:0; display:none;">Clear</button>
-      </div>
-      <div id="activeFilters" class="activeFilters"></div>
-    </div>
-
-    <div id="meta" class="muted" style="min-height:18px; margin:0 0 10px;"></div>
-    <div id="err" class="err"></div>
-
-    <!-- Desktop table -->
-    <div class="card desktopOnly">
-      <div class="tableWrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Stock</th>
-              <th>Warehouse</th>
-              <th>Total</th>
-              <th style="text-align:right;"></th>
-            </tr>
-          </thead>
-          <tbody id="tbody">
-            <tr><td colspan="5" class="small">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Mobile cards -->
-    <div class="mobileOnly">
-      <div id="mobileProducts" class="productList"></div>
-    </div>
-  </div>
-
-  <!-- Desktop floating CART -->
-  <div class="cartFab" id="cartBtn" style="display:none;">
-    <span>Cart</span><span class="badge" id="cartBadge">0</span>
-  </div>
-
-  <!-- Mobile bottom cart bar -->
-  <div class="cartBar" id="cartBar" style="display:none;">
-    <div class="cartBarInner">
-      <button class="cartBarBtn" id="cartBarBtn">
-        Cart <span class="badge" id="cartBarBadge">0</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Cart / Lead modal -->
-  <div id="cartOverlay" class="overlay">
-    <div class="modal">
-      <div class="modalHeader">
-        <span>Enter details</span>
-        <div class="actions"><button id="cartClose" class="btn">Close</button></div>
-      </div>
-      <div class="modalBody">
-        <div class="formGrid">
-          <div class="field"><label>Name</label><input id="custName" placeholder="Name"></div>
-          <div class="field"><label>Phone number</label><input id="phone" placeholder="Phone number" inputmode="tel"></div>
-          <div class="field"><label>Mail</label><input id="mail" placeholder="Mail" inputmode="email"></div>
-          <div class="field"><label>Note</label><textarea id="note1" placeholder="Note"></textarea></div>
-        </div>
-        <div style="margin-top:14px; font-weight:700;">Items:</div>
-        <div id="cartList" class="cartList"></div>
-        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px; flex-wrap:wrap;">
-          <button id="clearCartBtn" class="btn">Clear</button>
-          <button id="saveLeadBtn" class="btn btnPrimary">Save</button>
-        </div>
-        <div id="cartErr" class="err"></div>
-        <div id="cartTick" class="tick" style="display:none;"><span class="dot">v</span><span> Saved</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Account modal -->
-  <div id="accountOverlay" class="overlay">
-    <div class="modal">
-      <div class="modalHeader">
-        <span id="accountTitle">Account</span>
-        <div class="actions"><button id="accountClose" class="btn">Close</button></div>
-      </div>
-      <div class="modalBody">
-        <div class="muted" id="accountSub" style="margin-bottom:10px;"></div>
-        <div class="card desktopOnly">
-          <div style="font-weight:700; margin-bottom:8px;">Leads overview</div>
-          <div class="tableWrap">
-            <table style="min-width:820px;">
-              <thead>
-                <tr><th>Name</th><th>Phone</th><th>Mail</th><th>Product</th><th>Retail price</th><th>Note</th></tr>
-              </thead>
-              <tbody id="accountOrdersTbody">
-                <tr><td colspan="6" class="small">Loading...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div class="mobileOnly">
-          <div style="font-weight:700; margin-bottom:10px;">Leads overview</div>
-          <div id="mobileLeads" class="productList"></div>
-        </div>
-        <div id="accountErr" class="err"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Calculator modal -->
-  <div id="calcOverlay" class="overlay">
-    <div class="modal">
-      <div class="modalHeader">
-        <span>Calculator</span>
-        <div class="actions"><button id="calcClose" class="btn">Close</button></div>
-      </div>
-      <div class="modalBody">
-        <iframe id="calcFrame" title="Calculator" src="about:blank"></iframe>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxaQbcjGr6GC_fZhmWVpBkL6j8tNua61NhBnRMZOfkqtlIoHgyJN53rzZ4s8XUUG9N9pw/exec";
-    const CALCULATOR_URL = "https://surf-center.github.io/calculator/";
-    const PAGE_SIZE = 20;
-    const CACHE_KEY = "sc_products_cache";
-
-    const WAREHOUSE_KEYS = [
-      "msi_F4_qty","msi_NP7_qty","msi_apm_qty","msi_boards-and-more_qty",
-      "msi_coros_qty","msi_foxsports_qty","msi_h20_qty","msi_kubus_qty",
-      "msi_neilpryde_qty","msi_newsports_qty","msi_patrik_qty","msi_point7_qty",
-      "msi_ride_engine_qty","msi_slingshot_qty","msi_unifiber_qty","msi_weone_qty","msi_wip_qty"
-    ];
-    const WAREHOUSE_LABELS = {
-      "msi_F4_qty":"F4","msi_NP7_qty":"NP7","msi_apm_qty":"APM",
-      "msi_boards-and-more_qty":"Boards & More","msi_coros_qty":"Coros",
-      "msi_foxsports_qty":"Foxsports","msi_h20_qty":"H2O","msi_kubus_qty":"Kubus",
-      "msi_neilpryde_qty":"Neil Pryde","msi_newsports_qty":"Newsports",
-      "msi_patrik_qty":"Patrik","msi_point7_qty":"Point-7",
-      "msi_ride_engine_qty":"Ride Engine","msi_slingshot_qty":"Slingshot",
-      "msi_unifiber_qty":"Unifiber","msi_weone_qty":"WeOne","msi_wip_qty":"WIP"
-    };
-
-    function jsonp(url){
-      return new Promise((resolve,reject)=>{
-        const s=document.createElement("script");
-        const cb="cb_"+Math.random().toString(36).slice(2);
-        const t=setTimeout(()=>{cleanup();reject(new Error("Timeout"));},15000);
-        window[cb]=d=>{cleanup();resolve(d);};
-        function cleanup(){clearTimeout(t);delete window[cb];s.remove();}
-        s.onerror=()=>{cleanup();reject(new Error("Failed to load script"));};
-        s.src=url+(url.includes("?")?"&":"?")+"callback="+cb;
-        document.body.appendChild(s);
-      });
-    }
-
-    function fmtPrice(v){
-      if(v===null||v===undefined||v==="") return "";
-      const n=Number(String(v).replace(",","."));
-      return Number.isFinite(n) ? "EUR "+n.toFixed(2) : String(v);
-    }
-
-    const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-
-    function toNum(x){
-      if(x===null||x===undefined||x==="") return null;
-      const n=Number(String(x).replace(",",".").trim());
-      return Number.isFinite(n)?n:null;
-    }
-
-    function ownStock(r){ return toNum(r.msi_surfcenter_qty)??0; }
-    function warehouseStock(r){ return WAREHOUSE_KEYS.reduce((s,k)=>s+(toNum(r[k])??0),0); }
-    function warehouseBreakdown(r){ return WAREHOUSE_KEYS.map(k=>({label:WAREHOUSE_LABELS[k]||k,qty:toNum(r[k])??0})).filter(x=>x.qty>0); }
-    function stockStatus(r){ if(ownStock(r)>0)return"green"; if(warehouseStock(r)>0)return"orange"; return"red"; }
-    function statusRank(s){ return s==="green"?2:s==="orange"?1:0; }
-    function dotClass(s){ return s==="green"?"dotGreen":s==="orange"?"dotOrange":"dotRed"; }
-
-    function sortRows(a,b){
-      const sa=stockStatus(a),sb=stockStatus(b);
-      const r=statusRank(sb)-statusRank(sa); if(r!==0)return r;
-      const aO=ownStock(a),bO=ownStock(b),aW=warehouseStock(a),bW=warehouseStock(b);
-      const aV=sa==="green"?aO:sa==="orange"?aW:0, bV=sb==="green"?bO:sb==="orange"?bW:0;
-      if(bV!==aV)return bV-aV;
-      if((aO+aW)!==(bO+bW))return(bO+bW)-(aO+aW);
-      return String(a.name||"").localeCompare(String(b.name||""));
-    }
-
-    // ---- DOM refs ----
-    const loginView=document.getElementById("loginView"),appView=document.getElementById("appView");
-    const loginKey=document.getElementById("loginKey"),loginBtn=document.getElementById("loginBtn"),loginErr=document.getElementById("loginErr");
-    const accountBtn=document.getElementById("accountBtn"),logoutBtn=document.getElementById("logoutBtn");
-    const searchInput=document.getElementById("searchInput");
-    const filterCategory=document.getElementById("filterCategory"),filterSupplier=document.getElementById("filterSupplier"),filterSeason=document.getElementById("filterSeason");
-    const clearFiltersBtn=document.getElementById("clearFiltersBtn"),activeFiltersEl=document.getElementById("activeFilters");
-    const tbody=document.getElementById("tbody"),mobileProducts=document.getElementById("mobileProducts");
-    const meta=document.getElementById("meta"),err=document.getElementById("err");
-    const cartBtn=document.getElementById("cartBtn"),cartBar=document.getElementById("cartBar");
-    const cartBarBtn=document.getElementById("cartBarBtn"),cartBarBadge=document.getElementById("cartBarBadge");
-    const cartOverlay=document.getElementById("cartOverlay"),cartClose=document.getElementById("cartClose");
-    const cartListEl=document.getElementById("cartList"),cartErr=document.getElementById("cartErr"),cartTick=document.getElementById("cartTick");
-    const clearCartBtn=document.getElementById("clearCartBtn"),saveLeadBtn=document.getElementById("saveLeadBtn");
-    const custName=document.getElementById("custName"),phone=document.getElementById("phone"),mail=document.getElementById("mail"),note1=document.getElementById("note1");
-    const accountOverlay=document.getElementById("accountOverlay"),accountClose=document.getElementById("accountClose");
-    const accountTitle=document.getElementById("accountTitle"),accountSub=document.getElementById("accountSub");
-    const accountOrdersTbody=document.getElementById("accountOrdersTbody"),accountErr=document.getElementById("accountErr"),mobileLeads=document.getElementById("mobileLeads");
-    const calcOverlay=document.getElementById("calcOverlay"),calcClose=document.getElementById("calcClose"),calcFrame=document.getElementById("calcFrame");
-
-    let currentKey="",currentUserName="",isAdmin=false;
-    let allRows=[],expanded=new Set(),mobileExpanded=new Set(),cart=[];
-    let visibleCount=PAGE_SIZE;
-
-    // ---- Filters ----
-    function getFilters(){ return { q:searchInput.value.trim().toLowerCase(), category:filterCategory.value, supplier:filterSupplier.value, season:filterSeason.value }; }
-    function filtersActive(){ const f=getFilters(); return f.q||f.category||f.supplier||f.season; }
-
-    function matchesFilters(r,f){
-      if(f.q){ const tokens=f.q.split(/\s+/).filter(Boolean); const hay=((r.name||"")+" "+(r.ean_code||"")).toLowerCase(); if(!tokens.every(t=>hay.includes(t)))return false; }
-      if(f.category&&(r._attribute_set||"")!==f.category)return false;
-      if(f.supplier&&(r.manufacturer||"")!==f.supplier)return false;
-      if(f.season&&(r.season||"")!==f.season)return false;
-      return true;
-    }
-
-    function populateDropdowns(){
-      const cats=[...new Set(allRows.map(r=>r._attribute_set||"").filter(Boolean))].sort();
-      const sups=[...new Set(allRows.map(r=>r.manufacturer||"").filter(Boolean))].sort();
-      const seas=[...new Set(allRows.map(r=>r.season||"").filter(Boolean))].sort();
-      filterCategory.innerHTML=`<option value="">All categories</option>`+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
-      filterSupplier.innerHTML=`<option value="">All suppliers</option>`+sups.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("");
-      filterSeason.innerHTML=`<option value="">All seasons</option>`+seas.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("");
-      filterCategory.disabled=false; filterSupplier.disabled=false; filterSeason.disabled=false;
-    }
-
-    function updateActiveFilters(){
-      const f=getFilters();
-      activeFiltersEl.innerHTML="";
-      [f.category&&{label:f.category,clear:()=>{filterCategory.value="";onFilterChange();}},
-       f.supplier&&{label:f.supplier,clear:()=>{filterSupplier.value="";onFilterChange();}},
-       f.season&&{label:f.season,clear:()=>{filterSeason.value="";onFilterChange();}}]
-      .filter(Boolean).forEach(chip=>{
-        const el=document.createElement("div"); el.className="filterChip";
-        el.innerHTML=`<span>${esc(chip.label)}</span><button>x</button>`;
-        el.querySelector("button").onclick=chip.clear; activeFiltersEl.appendChild(el);
-      });
-      clearFiltersBtn.style.display=filtersActive()?"":"none";
-    }
-
-    // Debounce: only re-render 200ms after last keystroke
-    let _searchTimer=null;
-    function onFilterChange(reset){
-      updateActiveFilters();
-      if(reset!==false) visibleCount=PAGE_SIZE;
-      clearTimeout(_searchTimer);
-      _searchTimer=setTimeout(renderProducts, 200);
-    }
-
-    searchInput.addEventListener("input",()=>onFilterChange(true));
-    filterCategory.addEventListener("change",()=>onFilterChange(true));
-    filterSupplier.addEventListener("change",()=>onFilterChange(true));
-    filterSeason.addEventListener("change",()=>onFilterChange(true));
-    clearFiltersBtn.onclick=()=>{ searchInput.value=""; filterCategory.value=""; filterSupplier.value=""; filterSeason.value=""; onFilterChange(true); };
-
-    // ---- Cart ----
-    function setCartBadge(){ const n=String(cart.length); document.getElementById("cartBadge").textContent=n; cartBarBadge.textContent=n; }
-    function addToCart(item){ if(cart.some(x=>x.ean===item.ean))return; cart.push({ean:item.ean,product:item.name,retailPrice:item.retailPrice}); setCartBadge(); }
-    function removeFromCart(ean){ cart=cart.filter(x=>x.ean!==ean); setCartBadge(); renderCart(); }
-    function renderCart(){
-      if(!cart.length){ cartListEl.innerHTML=`<div class="cartRow"><div class="small">No items.</div></div>`; return; }
-      cartListEl.innerHTML=cart.map(it=>`<div class="cartRow"><div class="left"><div style="font-weight:500;">${esc(it.product||"")}</div><div class="small">Retail: ${esc(fmtPrice(it.retailPrice))}</div></div><div><button class="btn" data-remove="${esc(it.ean)}">Remove</button></div></div>`).join("");
-      cartListEl.querySelectorAll("button[data-remove]").forEach(b=>b.addEventListener("click",()=>removeFromCart(b.getAttribute("data-remove"))));
-    }
-
-    // ---- Auth ----
-    function showLogin(){ loginView.style.display="block"; appView.style.display="none"; cartBtn.style.display="none"; cartBar.style.display="none"; loginErr.textContent=""; loginKey.value=""; loginKey.focus(); }
-    function showApp(){ loginView.style.display="none"; appView.style.display="block"; cartBtn.style.display=""; cartBar.style.display=""; }
-    function logout(){ localStorage.removeItem("employeeKey"); currentKey=""; showLogin(); }
-    logoutBtn.onclick=logout;
-
-    // ---- Cart modal ----
-    function openCart(){ cartErr.textContent=""; cartTick.style.display="none"; renderCart(); cartOverlay.classList.add("active"); }
-    function closeCart(){ cartOverlay.classList.remove("active"); }
-    cartBtn.onclick=openCart; cartBarBtn.onclick=openCart; cartClose.onclick=closeCart;
-    cartOverlay.addEventListener("click",e=>{ if(e.target===cartOverlay)closeCart(); });
-    clearCartBtn.onclick=()=>{ cart=[]; setCartBadge(); renderCart(); };
-
-    // ---- Calculator modal ----
-    function openCalculatorForRow(r){
-      const retail=Number(String(r.retailPrice??"").replace(",","."));
-      const purchase=Number(String(r.purchasePrice??"").replace(",","."));
-      const params=new URLSearchParams();
-      if(Number.isFinite(purchase))params.set("p",purchase.toFixed(2));
-      if(Number.isFinite(retail))params.set("s",retail.toFixed(2));
-      calcFrame.src=params.toString()?`${CALCULATOR_URL}?${params}`:CALCULATOR_URL;
-      calcOverlay.classList.add("active");
-    }
-    function closeCalculator(){ calcOverlay.classList.remove("active"); calcFrame.src="about:blank"; }
-    calcClose.onclick=closeCalculator;
-    calcOverlay.addEventListener("click",e=>{ if(e.target===calcOverlay)closeCalculator(); });
-
-    // ---- Account modal ----
-    function openAccount(){ accountErr.textContent=""; accountOverlay.classList.add("active"); accountTitle.textContent=currentUserName||"Account"; accountSub.textContent=isAdmin?"Surfcenter: all leads":"Your leads"; loadAccountOrders(); }
-    function closeAccountFn(){ accountOverlay.classList.remove("active"); }
-    accountBtn.onclick=openAccount; accountClose.onclick=closeAccountFn;
-    accountOverlay.addEventListener("click",e=>{ if(e.target===accountOverlay)closeAccountFn(); });
-
-    async function loadAccountOrders(){
-      accountErr.textContent=""; accountOrdersTbody.innerHTML=`<tr><td colspan="6" class="small">Loading...</td></tr>`; mobileLeads.innerHTML="";
-      const scope=isAdmin?"all":"mine";
-      try{
-        const res=await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=orders&scope=${scope}&key=${encodeURIComponent(currentKey)}`);
-        if(!res||!res.ok)throw new Error(res?.error||"Could not load leads");
-        const orders=Array.isArray(res.orders)?res.orders:[];
-        if(!orders.length){ accountOrdersTbody.innerHTML=`<tr><td colspan="6" class="small">No leads.</td></tr>`; mobileLeads.innerHTML=`<div class="small">No leads.</div>`; return; }
-        accountOrdersTbody.innerHTML=orders.map(o=>`<tr><td>${esc(o.name||"")}</td><td>${esc(o.phoneNumber||"")}</td><td>${esc(o.mail||"")}</td><td>${esc(o.product||"")}</td><td>${esc(fmtPrice(o.retailPrice))}</td><td>${esc(o.note1||o.note||"")}</td></tr>`).join("");
-        mobileLeads.innerHTML=orders.map((o,i)=>{const id=`lead_${i}`;return`<div class="pCard" data-lead="${id}"><div class="pRow"><div class="pName" style="font-weight:700;">${esc(o.name||"Lead")}</div><div class="pActions"><button class="btn pToggle" data-toggle-lead="${id}">+</button></div></div><div class="pDetails" id="${id}"><div class="kv"><div class="k">Phone</div><div class="v">${esc(o.phoneNumber||"-")}</div><div class="k">Mail</div><div class="v">${esc(o.mail||"-")}</div><div class="k">Product</div><div class="v">${esc(o.product||"")}</div><div class="k">Retail</div><div class="v">${esc(fmtPrice(o.retailPrice))}</div><div class="k">Note</div><div class="v">${esc(o.note1||o.note||"-")}</div></div></div></div>`;}).join("");
-        mobileLeads.querySelectorAll("button[data-toggle-lead]").forEach(btn=>btn.addEventListener("click",()=>{const id=btn.getAttribute("data-toggle-lead");const d=document.getElementById(id);const open=d.classList.toggle("open");btn.textContent=open?"-":"+";}));
-      }catch(e){ accountErr.textContent=e.message; accountOrdersTbody.innerHTML=`<tr><td colspan="6" class="small">Error.</td></tr>`; mobileLeads.innerHTML=`<div class="small">Error.</div>`; }
-    }
-
-    // ---- Products ----
-    function applyData(res, fromCache){
-      isAdmin=!!res.isAdmin;
-      currentUserName=(res.user&&res.user.name)?res.user.name:"";
-      accountBtn.textContent=currentUserName||"Account";
-      allRows=Array.isArray(res.rows)?res.rows:[];
-      expanded.clear(); mobileExpanded.clear(); visibleCount=PAGE_SIZE;
-      meta.textContent=`${allRows.length} items`+(fromCache?" (cached)":"");
-      searchInput.disabled=false;
-      populateDropdowns(); updateActiveFilters(); renderProducts();
-    }
-
-    async function loadProducts(){
-      err.textContent="";
-      const cached=localStorage.getItem(CACHE_KEY);
-      if(cached){
-        try{ const c=JSON.parse(cached); if(c.key===currentKey) applyData(c.res,true); }catch(e){}
-      } else {
-        meta.textContent="Loading...";
-        tbody.innerHTML=`<tr><td colspan="5" class="small">Loading...</td></tr>`;
-        mobileProducts.innerHTML=`<div class="small">Loading...</div>`;
-      }
-      const res=await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=data&key=${encodeURIComponent(currentKey)}`);
-      if(!res||!res.ok)throw new Error(res?.error||"Could not load data");
-      localStorage.setItem(CACHE_KEY,JSON.stringify({key:currentKey,res}));
-      applyData(res,false);
-    }
-
-    // ---- Render ----
-    function renderProducts(){
-      const f=getFilters();
-      const allFiltered=[...allRows.filter(r=>matchesFilters(r,f))].sort(sortRows);
-      const total=allFiltered.length;
-      const rows=allFiltered.slice(0,visibleCount);
-
-      meta.textContent=(f.category||f.supplier||f.season||f.q)?`${total} of ${allRows.length} items`:`${allRows.length} items`;
-
-      // Desktop
-      tbody.innerHTML="";
-      if(!rows.length){
-        tbody.innerHTML=`<tr><td colspan="5" class="small">No results.</td></tr>`;
-      } else {
-        rows.forEach((r,i)=>{
-          const id=`${r.ean_code}__${i}`,own=ownStock(r),wh=warehouseStock(r),tot=own+wh,dc=dotClass(stockStatus(r));
-          const tr=document.createElement("tr");
-          const tdP=document.createElement("td"); tdP.innerHTML=`<span class="stockDot ${dc}"></span>${esc(r.name||"")}`;
-          tr.appendChild(tdP);
-          [String(own),String(wh),String(tot)].forEach(v=>tr.appendChild(Object.assign(document.createElement("td"),{textContent:v})));
-          const tdA=document.createElement("td"); tdA.className="tdActions";
-          const wrap=document.createElement("div"); wrap.className="actionWrap";
-          const iBtn=document.createElement("button"); iBtn.className="btn"; iBtn.textContent=expanded.has(id)?"Close":"Info";
-          iBtn.onclick=()=>{ expanded.has(id)?expanded.delete(id):expanded.add(id); renderProducts(); };
-          const cBtn=document.createElement("button"); cBtn.className="btnCalc"; cBtn.title="Calculator"; cBtn.textContent="%"; cBtn.onclick=()=>openCalculatorForRow(r);
-          const aBtn=document.createElement("button"); aBtn.className="btn btnPrimary"; aBtn.textContent="Add"; aBtn.onclick=()=>addToCart({ean:r.ean_code,name:r.name,retailPrice:r.retailPrice});
-          wrap.appendChild(iBtn); wrap.appendChild(cBtn); wrap.appendChild(aBtn); tdA.appendChild(wrap); tr.appendChild(tdA); tbody.appendChild(tr);
-
-          if(expanded.has(id)){
-            const bd=warehouseBreakdown(r);
-            const whD=bd.length?`<div class="whBreakdown">${bd.map(x=>`<div class="whLine">${esc(x.label)}: ${x.qty}</div>`).join("")}</div>`:"";
-            const tr2=document.createElement("tr"); tr2.className="detailsRow";
-            const td=document.createElement("td"); td.colSpan=5;
-            td.innerHTML=`<div class="kv" style="grid-template-columns:130px 1fr;"><div class="k">EAN</div><div class="v">${esc(r.ean_code||"")}</div><div class="k">Supplier</div><div class="v">${esc(r.manufacturer||"")}</div><div class="k">Category</div><div class="v">${esc(r._attribute_set||"")}</div><div class="k">Season</div><div class="v">${esc(r.season||"")}</div><div class="k">Retail price</div><div class="v">${esc(fmtPrice(r.retailPrice))}</div><div class="k">Stock (SC)</div><div class="v">${own}</div><div class="k">Warehouse</div><div class="v">${whD}</div></div>`;
-            tr2.appendChild(td); tbody.appendChild(tr2);
-          }
-        });
-
-        if(total>visibleCount){
-          const tr=document.createElement("tr");
-          const td=document.createElement("td"); td.colSpan=5;
-          td.innerHTML=`<div class="showMoreWrap"><button class="showMoreBtn">Show more (${total-visibleCount} remaining)</button></div>`;
-          td.querySelector("button").onclick=()=>{ visibleCount+=PAGE_SIZE; renderProducts(); };
-          tr.appendChild(td); tbody.appendChild(tr);
-        }
-      }
-
-      // Mobile
-      if(!rows.length){ mobileProducts.innerHTML=`<div class="small">No results.</div>`; return; }
-
-      mobileProducts.innerHTML=rows.map((r,i)=>{
-        const id=`m_${r.ean_code}__${i}`,open=mobileExpanded.has(id);
-        const own=ownStock(r),wh=warehouseStock(r),tot=own+wh,dc=dotClass(stockStatus(r));
-        const bd=warehouseBreakdown(r);
-        const whD=bd.map(x=>`<div class="whLine">${esc(x.label)}: ${x.qty}</div>`).join("");
-        return`<div class="pCard" data-id="${id}"><div class="pRow"><div class="pName"><span class="stockDot ${dc}"></span>${esc(r.name||"")}</div><div class="pActions"><button class="btn pToggle" data-toggle="${id}">${open?"Close":"Info"}</button><button class="btnCalc" data-calc="${id}">%</button><button class="btn btnPrimary pTiny" data-add="${id}">Add</button></div></div><div class="pDetails ${open?"open":""}" id="${id}"><div class="kv"><div class="k">Supplier</div><div class="v">${esc(r.manufacturer||"-")}</div><div class="k">Category</div><div class="v">${esc(r._attribute_set||"-")}</div><div class="k">Season</div><div class="v">${esc(r.season||"-")}</div><div class="k">Retail</div><div class="v">${esc(fmtPrice(r.retailPrice))}</div><div class="k">Stock (SC)</div><div class="v">${own}</div><div class="k">Warehouse</div><div class="v">${wh}</div><div class="k">Total</div><div class="v">${tot}</div>${whD?`<div class="k">Detail</div><div class="v"><div class="whBreakdown">${whD}</div></div>`:""}<div class="k">EAN</div><div class="v">${esc(r.ean_code||"-")}</div></div></div></div>`;
-      }).join("");
-
-      if(total>visibleCount){
-        mobileProducts.innerHTML+=`<div class="showMoreWrap"><button class="showMoreBtn">Show more (${total-visibleCount} remaining)</button></div>`;
-        mobileProducts.querySelector(".showMoreBtn").onclick=()=>{ visibleCount+=PAGE_SIZE; renderProducts(); };
-      }
-
-      mobileProducts.querySelectorAll("button[data-toggle]").forEach(btn=>btn.addEventListener("click",()=>{
-        const id=btn.getAttribute("data-toggle");
-        mobileExpanded.has(id)?mobileExpanded.delete(id):mobileExpanded.add(id);
-        renderProducts();
-      }));
-      mobileProducts.querySelectorAll("button[data-add]").forEach(btn=>btn.addEventListener("click",()=>{
-        const parent=btn.closest(".pCard"); const pid=parent.getAttribute("data-id");
-        const idx=rows.findIndex((_,i)=>`m_${rows[i].ean_code}__${i}`===pid);
-        const r=rows[idx]; if(r)addToCart({ean:r.ean_code,name:r.name,retailPrice:r.retailPrice});
-      }));
-      mobileProducts.querySelectorAll("button[data-calc]").forEach(btn=>btn.addEventListener("click",()=>{
-        const parent=btn.closest(".pCard"); const pid=parent.getAttribute("data-id");
-        const idx=rows.findIndex((_,i)=>`m_${rows[i].ean_code}__${i}`===pid);
-        const r=rows[idx]; if(r)openCalculatorForRow(r);
-      }));
-    }
-
-    // ---- Save lead ----
-    saveLeadBtn.onclick=async()=>{
-      cartErr.textContent=""; cartTick.style.display="none";
-      const name=custName.value.trim(),p=phone.value.trim(),m=mail.value.trim(),n1=note1.value.trim();
-      if(!name){cartErr.textContent="Name is required.";return;}
-      if(!p&&!m){cartErr.textContent="Phone number or mail is required.";return;}
-      if(!cart.length){cartErr.textContent="Cart is empty.";return;}
-      const payload={name,phoneNumber:p,mail:m,note1:n1,items:cart};
-      const url=`${APPS_SCRIPT_WEBAPP_URL}?action=submitLead&key=${encodeURIComponent(currentKey)}&payload=${encodeURIComponent(JSON.stringify(payload))}`;
-      saveLeadBtn.disabled=true; saveLeadBtn.textContent="Saving...";
-      try{
-        const res=await jsonp(url);
-        if(!res||!res.ok)throw new Error(res?.error||"Save failed");
-        cart=[]; setCartBadge(); renderCart();
-        custName.value=""; phone.value=""; mail.value=""; note1.value="";
-        cartTick.style.display="";
-      }catch(e){ cartErr.textContent="Error saving: "+e.message; }
-      finally{ saveLeadBtn.disabled=false; saveLeadBtn.textContent="Save"; }
-    };
-
-    // ---- Login ----
-    loginBtn.onclick=async()=>{
-      loginErr.textContent=""; const key=loginKey.value.trim();
-      if(!key){loginErr.textContent="Please enter a key.";return;}
-      loginBtn.disabled=true; loginBtn.textContent="Login...";
-      try{
-        const res=await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=data&key=${encodeURIComponent(key)}`);
-        if(!res||!res.ok)throw new Error(res?.error||"Login failed");
-        localStorage.setItem("employeeKey",key); currentKey=key;
-        showApp(); setCartBadge();
-        localStorage.setItem(CACHE_KEY,JSON.stringify({key,res}));
-        applyData(res,false);
-      }catch(e){ loginErr.textContent=e.message; }
-      finally{ loginBtn.disabled=false; loginBtn.textContent="Login"; }
-    };
-
-    // ---- Auto-login ----
-    document.addEventListener("DOMContentLoaded",()=>{
-      const stored=(localStorage.getItem("employeeKey")||"").trim();
-      if(!stored){showLogin();return;}
-      currentKey=stored; showApp(); setCartBadge();
-      loadProducts().catch(()=>{ logout(); });
+    const customer = String(row[idx[HD.customer]] || "").trim();
+    if (!customer && !rowSupplier) continue;
+    orders.push({
+      rowId: i + 2,
+      Customer: customer,
+      Supplier: rowSupplier,
+      "Mail Customer": hasMailCustomer ? String(row[idx[HD.mailCustomer]] || "").trim() : "",
+      "Dropshipment order": String(row[idx[HD.dropOrder]] || "").trim(),
+      "Surfcenter order": String(row[idx[HD.surfOrder]] || "").trim(),
+      Carrier: String(row[idx[HD.carrier]] || "").trim(),
+      Trackingnumber: String(row[idx[HD.trackingNumber]] || "").trim(),
+      Trackinglink: String(row[idx[HD.trackingLink]] || "").trim(),
+      "Mail Supplier": supplierMailMap[rowSupplier.toLowerCase()] || "",
+      "Supplier KEY": supplierKeyMap[rowSupplier.toLowerCase()] || "",
+      Completed: isTruthy_(row[idx[HD.completed]]),
     });
-  </script>
-</body>
-</html>
+  }
+  return output_({ ok: true, orders }, e);
+}
 
+function listInvoiceOrders_(e, auth) {
+  if (auth.loginType === LOGIN_SUPPLIER) {
+    return output_({ ok: true, orders: [] }, e);
+  }
+  const sh = invoiceSheet_();
+  const { rows, idx } = read_(sh);
+  mustHave_(idx, [
+    HI.customer,
+    HI.mailCustomer,
+    HI.accountmanager,
+    HI.surfOrder,
+    HI.trackingLink,
+    HI.trackingNumber,
+    HI.carrier,
+    HI.completed,
+  ]);
+  const hasLanguage = idx[HI.language] !== undefined;
+  const orders = [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowAccountmanager = String(row[idx[HI.accountmanager]] || "").trim();
+    if (auth.loginType === LOGIN_ACCOUNTMANAGER &&
+      rowAccountmanager.toLowerCase() !== auth.accountmanager.toLowerCase()) {
+      continue;
+    }
+    const customer = String(row[idx[HI.customer]] || "").trim();
+    if (!customer && !rowAccountmanager) continue;
+    orders.push({
+      rowId: i + 2,
+      Customer: customer,
+      "Mail Customer": String(row[idx[HI.mailCustomer]] || "").trim(),
+      Accountmanager: rowAccountmanager,
+      "Mail Accountmanager": findMailByAccountmanager_(rowAccountmanager),
+      "Surfcenter order": String(row[idx[HI.surfOrder]] || "").trim(),
+      Carrier: String(row[idx[HI.carrier]] || "").trim(),
+      Trackingnumber: String(row[idx[HI.trackingNumber]] || "").trim(),
+      Trackinglink: String(row[idx[HI.trackingLink]] || "").trim(),
+      Language: hasLanguage ? String(row[idx[HI.language]] || "").trim() : "",
+      Completed: isTruthy_(row[idx[HI.completed]]),
+    });
+  }
+  return output_({ ok: true, orders }, e);
+}
+
+/* =========================
+ * UPDATE
+ * ========================= */
+function updateTrackingGet_(e) {
+  const mode = normalizeMode_(e?.parameter?.mode);
+  const auth = resolveAuthFromKey_(e);
+  if (!auth.ok) return output_(auth, e);
+  const rowId = Number(e?.parameter?.rowId);
+  if (!rowId || rowId < 2) {
+    return output_({ ok: false, error: "Invalid rowId" }, e);
+  }
+  const Carrier = String(e?.parameter?.Carrier || "").trim();
+  const Trackingnumber = String(e?.parameter?.Trackingnumber || "").trim();
+  const Trackinglink = String(e?.parameter?.Trackinglink || "").trim();
+  if (!Carrier || !Trackingnumber || !Trackinglink) {
+    return output_({ ok: false, error: "Missing tracking fields" }, e);
+  }
+  if (mode === MODE_DROPSHIP) {
+    if (auth.loginType === LOGIN_ACCOUNTMANAGER) {
+      return output_({ ok: false, error: "Unauthorized" }, e);
+    }
+    const sh = dropshipSheet_();
+    const { idx } = read_(sh);
+    mustHave_(idx, [HD.supplier, HD.carrier, HD.trackingNumber, HD.trackingLink]);
+    if (auth.loginType === LOGIN_SUPPLIER) {
+      const sheetSupplier = String(sh.getRange(rowId, idx[HD.supplier] + 1).getValue() || "")
+        .trim()
+        .toLowerCase();
+      if (sheetSupplier !== auth.supplier.toLowerCase()) {
+        return output_({ ok: false, error: "Unauthorized" }, e);
+      }
+    }
+    sh.getRange(rowId, idx[HD.carrier] + 1).setValue(Carrier);
+    sh.getRange(rowId, idx[HD.trackingNumber] + 1).setValue(Trackingnumber);
+    sh.getRange(rowId, idx[HD.trackingLink] + 1).setValue(Trackinglink);
+    return output_({ ok: true }, e);
+  }
+  if (auth.loginType !== LOGIN_MASTER && auth.loginType !== LOGIN_ACCOUNTMANAGER) {
+    return output_({ ok: false, error: "Unauthorized" }, e);
+  }
+  const sh = invoiceSheet_();
+  const { idx } = read_(sh);
+  mustHave_(idx, [HI.accountmanager, HI.carrier, HI.trackingNumber, HI.trackingLink]);
+  if (auth.loginType === LOGIN_ACCOUNTMANAGER) {
+    const rowAm = String(sh.getRange(rowId, idx[HI.accountmanager] + 1).getValue() || "")
+      .trim()
+      .toLowerCase();
+    if (rowAm !== auth.accountmanager.toLowerCase()) {
+      return output_({ ok: false, error: "Unauthorized" }, e);
+    }
+  }
+  sh.getRange(rowId, idx[HI.carrier] + 1).setValue(Carrier);
+  sh.getRange(rowId, idx[HI.trackingNumber] + 1).setValue(Trackingnumber);
+  sh.getRange(rowId, idx[HI.trackingLink] + 1).setValue(Trackinglink);
+  return output_({ ok: true }, e);
+}
+
+/* =========================
+ * CREATE
+ * ========================= */
+function createOrderGet_(e) {
+  const mode = normalizeMode_(e?.parameter?.mode);
+  const auth = resolveAuthFromKey_(e);
+  if (!auth.ok) return output_(auth, e);
+  return mode === MODE_DROPSHIP
+    ? createDropshipOrder_(e, auth)
+    : createInvoiceOrder_(e, auth);
+}
+
+function createDropshipOrder_(e, auth) {
+  if (auth.loginType !== LOGIN_MASTER) {
+    return output_({ ok: false, error: "Unauthorized" }, e);
+  }
+  const Customer = String(e?.parameter?.Customer || "").trim();
+  const MailCustomer = String(e?.parameter?.MailCustomer || "").trim();
+  const Supplier = String(e?.parameter?.Supplier || "").trim();
+  const DropshipmentOrder = String(e?.parameter?.DropshipmentOrder || "").trim();
+  const SurfcenterOrder = String(e?.parameter?.SurfcenterOrder || "").trim();
+  if (!Customer || !MailCustomer || !Supplier || !DropshipmentOrder || !SurfcenterOrder) {
+    return output_({ ok: false, error: "Missing fields" }, e);
+  }
+  const sh = dropshipSheet_();
+  const { idx } = read_(sh);
+  mustHave_(idx, [HD.customer, HD.mailCustomer, HD.supplier, HD.dropOrder, HD.surfOrder, HD.completed]);
+  const newRow = new Array(sh.getLastColumn()).fill("");
+  newRow[idx[HD.customer]] = Customer;
+  newRow[idx[HD.mailCustomer]] = MailCustomer;
+  newRow[idx[HD.supplier]] = Supplier;
+  newRow[idx[HD.dropOrder]] = DropshipmentOrder;
+  newRow[idx[HD.surfOrder]] = SurfcenterOrder;
+  if (idx[HD.supplierKey] !== undefined) {
+    const key = findKeyBySupplier_(Supplier);
+    if (key) newRow[idx[HD.supplierKey]] = key;
+  }
+  newRow[idx[HD.completed]] = "FALSE";
+  sh.appendRow(newRow);
+  return output_({ ok: true }, e);
+}
+
+function createInvoiceOrder_(e, auth) {
+  if (auth.loginType !== LOGIN_MASTER && auth.loginType !== LOGIN_ACCOUNTMANAGER) {
+    return output_({ ok: false, error: "Unauthorized" }, e);
+  }
+  const Customer = String(e?.parameter?.Customer || "").trim();
+  const MailCustomer = String(e?.parameter?.MailCustomer || "").trim();
+  const SurfcenterOrder = String(e?.parameter?.SurfcenterOrder || "").trim();
+  const Language = String(e?.parameter?.Language || "").trim();
+  let Accountmanager = String(e?.parameter?.Accountmanager || "").trim();
+  if (auth.loginType === LOGIN_ACCOUNTMANAGER) {
+    Accountmanager = auth.accountmanager;
+  }
+  if (!Customer || !MailCustomer || !Accountmanager || !SurfcenterOrder) {
+    return output_({ ok: false, error: "Missing fields" }, e);
+  }
+  const sh = invoiceSheet_();
+  const { idx } = read_(sh);
+  mustHave_(idx, [HI.customer, HI.mailCustomer, HI.accountmanager, HI.surfOrder, HI.completed]);
+  const newRow = new Array(sh.getLastColumn()).fill("");
+  newRow[idx[HI.customer]] = Customer;
+  newRow[idx[HI.mailCustomer]] = MailCustomer;
+  newRow[idx[HI.accountmanager]] = Accountmanager;
+  newRow[idx[HI.surfOrder]] = SurfcenterOrder;
+  if (idx[HI.language] !== undefined && Language) {
+    newRow[idx[HI.language]] = Language;
+  }
+  newRow[idx[HI.completed]] = "FALSE";
+  sh.appendRow(newRow);
+  return output_({ ok: true }, e);
+}
+
+/* =========================
+ * COMPLETED
+ * ========================= */
+function setCompletedGet_(e) {
+  const mode = normalizeMode_(e?.parameter?.mode);
+  const auth = resolveAuthFromKey_(e);
+  if (!auth.ok) return output_(auth, e);
+  const rowId = Number(e?.parameter?.rowId);
+  if (!rowId || rowId < 2) {
+    return output_({ ok: false, error: "Invalid rowId" }, e);
+  }
+  const CompletedRaw = String(e?.parameter?.Completed ?? e?.parameter?.completed ?? "").trim().toUpperCase();
+  if (CompletedRaw !== "TRUE" && CompletedRaw !== "FALSE") {
+    return output_({ ok: false, error: "Completed must be TRUE or FALSE" }, e);
+  }
+  if (mode === MODE_DROPSHIP) {
+    if (auth.loginType !== LOGIN_MASTER && auth.loginType !== LOGIN_SUPPLIER) {
+      return output_({ ok: false, error: "Unauthorized" }, e);
+    }
+    const sh = dropshipSheet_();
+    const { idx } = read_(sh);
+    mustHave_(idx, [HD.completed, HD.supplier]);
+    if (auth.loginType === LOGIN_SUPPLIER) {
+      const sheetSupplier = String(sh.getRange(rowId, idx[HD.supplier] + 1).getValue() || "").trim().toLowerCase();
+      if (sheetSupplier !== auth.supplier.toLowerCase()) {
+        return output_({ ok: false, error: "Unauthorized" }, e);
+      }
+    }
+    sh.getRange(rowId, idx[HD.completed] + 1).setValue(CompletedRaw);
+    return output_({ ok: true }, e);
+  }
+  if (auth.loginType !== LOGIN_MASTER && auth.loginType !== LOGIN_ACCOUNTMANAGER) {
+    return output_({ ok: false, error: "Unauthorized" }, e);
+  }
+  const sh = invoiceSheet_();
+  const { idx } = read_(sh);
+  mustHave_(idx, [HI.completed, HI.accountmanager]);
+  if (auth.loginType === LOGIN_ACCOUNTMANAGER) {
+    const rowAm = String(sh.getRange(rowId, idx[HI.accountmanager] + 1).getValue() || "").trim().toLowerCase();
+    if (rowAm !== auth.accountmanager.toLowerCase()) {
+      return output_({ ok: false, error: "Unauthorized" }, e);
+    }
+  }
+  sh.getRange(rowId, idx[HI.completed] + 1).setValue(CompletedRaw);
+  return output_({ ok: true }, e);
+}
+
+/* =========================
+ * TEMPLATES
+ * ========================= */
+function listTemplates_(e, sheetName, allowedRoles) {
+  const auth = resolveAuthFromKey_(e);
+  if (!auth.ok) return output_(auth, e);
+  if (!allowedRoles.includes(auth.loginType)) {
+    return output_({ ok: false, error: "Unauthorized" }, e);
+  }
+  const sh = getSheetOrThrow_(sheetName);
+  const values = sh.getDataRange().getValues();
+  if (values.length < 2) return output_({ ok: true, templates: [] }, e);
+  const hdr = values[0].map(String);
+  const idx = indexMap_(hdr);
+  mustHave_(idx, ["ID", "Language", "Label", "Subject", "Body"]);
+  const templates = [];
+  for (let i = 1; i < values.length; i++) {
+    const r = values[i];
+    const id = String(r[idx["ID"]] || "").trim();
+    const language = String(r[idx["Language"]] || "").trim().toLowerCase();
+    const label = String(r[idx["Label"]] || "").trim();
+    const subject = String(r[idx["Subject"]] || "").trim();
+    const body = String(r[idx["Body"]] || "").trim();
+    if (!id || !label) continue;
+    templates.push({ id, language, label, subject, body });
+  }
+  return output_({ ok: true, templates }, e);
+}
+
+function upsertTemplate_(e, sheetName, maxCount, allowedRoles) {
+  const auth = resolveAuthFromKey_(e);
+  if (!auth.ok) return output_(auth, e);
+  if (!allowedRoles.includes(auth.loginType)) {
+    return output_({ ok: false, error: "Unauthorized" }, e);
+  }
+  const sh = getSheetOrThrow_(sheetName);
+  const values = sh.getDataRange().getValues();
+  if (values.length < 1) throw new Error(`Sheet is empty: ${sheetName}`);
+  const hdr = values[0].map(String);
+  const idx = indexMap_(hdr);
+  mustHave_(idx, ["ID", "Language", "Label", "Subject", "Body"]);
+  const idParam = String(e?.parameter?.id || "").trim();
+  const language = String(e?.parameter?.language || "en").trim().toLowerCase();
+  const label = String(e?.parameter?.label || "").trim();
+  const subject = String(e?.parameter?.subject || "").trim();
+  const body = String(e?.parameter?.body || "").trim();
+  if (!label) return output_({ ok: false, error: "Missing label" }, e);
+  let foundRow = 0;
+  if (idParam) {
+    for (let r = 2; r <= values.length; r++) {
+      const cur = String(values[r - 1][idx["ID"]] || "").trim();
+      if (cur === idParam) {
+        foundRow = r;
+        break;
+      }
+    }
+  }
+  if (!foundRow && typeof maxCount === "number") {
+    let count = 0;
+    for (let i = 1; i < values.length; i++) {
+      if (String(values[i][idx["ID"]] || "").trim()) count++;
+    }
+    if (count >= maxCount) {
+      return output_({ ok: false, error: `Max ${maxCount} templates reached` }, e);
+    }
+  }
+  const id = foundRow ? idParam : Utilities.getUuid();
+  if (!foundRow) {
+    const newRow = new Array(sh.getLastColumn()).fill("");
+    newRow[idx["ID"]] = id;
+    newRow[idx["Language"]] = language;
+    newRow[idx["Label"]] = label;
+    newRow[idx["Subject"]] = subject;
+    newRow[idx["Body"]] = body;
+    sh.appendRow(newRow);
+    return output_({ ok: true, id, mode: "insert" }, e);
+  }
+  sh.getRange(foundRow, idx["Language"] + 1).setValue(language);
+  sh.getRange(foundRow, idx["Label"] + 1).setValue(label);
+  sh.getRange(foundRow, idx["Subject"] + 1).setValue(subject);
+  sh.getRange(foundRow, idx["Body"] + 1).setValue(body);
+  return output_({ ok: true, id, mode: "update" }, e);
+}
+
+/* =========================
+ * MAIL LOG
+ * ========================= */
+function logMail_(e) {
+  const auth = resolveAuthFromKey_(e);
+  if (!auth.ok) return output_(auth, e);
+  if (auth.loginType !== LOGIN_MASTER && auth.loginType !== LOGIN_ACCOUNTMANAGER) {
+    return output_({ ok: false, error: "Unauthorized" }, e);
+  }
+  const mode = normalizeMode_(e?.parameter?.mode);
+  const sheetName = mode === MODE_INVOICE ? MAIL_LOG_2_SHEET : MAIL_LOG_SHEET;
+  const sh = getSheetOrThrow_(sheetName);
+  const { idx } = read_(sh);
+  mustHave_(idx, ["Timestamp", "RowID", "Customer", "OrderID", "To", "Kind", "Language", "Template", "Subject"]);
+  const RowID = String(e?.parameter?.RowID || "").trim();
+  if (!RowID) return output_({ ok: false, error: "Missing RowID" }, e);
+  const newRow = new Array(sh.getLastColumn()).fill("");
+  newRow[idx["Timestamp"]] = new Date();
+  newRow[idx["RowID"]] = RowID;
+  newRow[idx["Customer"]] = String(e?.parameter?.Customer || "").trim();
+  newRow[idx["OrderID"]] = String(e?.parameter?.OrderID || "").trim();
+  newRow[idx["To"]] = String(e?.parameter?.To || "").trim();
+  newRow[idx["Kind"]] = String(e?.parameter?.Kind || "").trim();
+  newRow[idx["Language"]] = String(e?.parameter?.Language || "").trim();
+  newRow[idx["Template"]] = String(e?.parameter?.Template || "").trim();
+  newRow[idx["Subject"]] = String(e?.parameter?.Subject || "").trim();
+  sh.appendRow(newRow);
+  return output_({ ok: true }, e);
+}
+
+function listMailLog_(e) {
+  const auth = resolveAuthFromKey_(e);
+  if (!auth.ok) return output_(auth, e);
+  if (auth.loginType !== LOGIN_MASTER && auth.loginType !== LOGIN_ACCOUNTMANAGER) {
+    return output_({ ok: false, error: "Unauthorized" }, e);
+  }
+  const mode = normalizeMode_(e?.parameter?.mode);
+  const sheetName = mode === MODE_INVOICE ? MAIL_LOG_2_SHEET : MAIL_LOG_SHEET;
+  const sh = getSheetOrThrow_(sheetName);
+  const RowID = String(e?.parameter?.RowID || "").trim();
+  if (!RowID) return output_({ ok: false, error: "Missing RowID" }, e);
+  const values = sh.getDataRange().getValues();
+  if (values.length < 2) return output_({ ok: true, rows: [] }, e);
+  const hdr = values[0].map(String);
+  const idx = indexMap_(hdr);
+  mustHave_(idx, ["Timestamp", "RowID", "Template", "Subject"]);
+  const out = [];
+  for (let i = values.length - 1; i >= 1; i--) {
+    const r = values[i];
+    if (String(r[idx["RowID"]] || "").trim() !== RowID) continue;
+    out.push({
+      Timestamp: formatTs_(r[idx["Timestamp"]]),
+      Template: String(r[idx["Template"]] || "").trim() || "-",
+      Subject: String(r[idx["Subject"]] || "").trim() || "-",
+    });
+    if (out.length >= 50) break;
+  }
+  return output_({ ok: true, rows: out }, e);
+}
+
+/* =========================
+ * HELPERS
+ * ========================= */
+function suppliersSheet_() {
+  return getSheetOrThrow_(SUPPLIERS_SHEET);
+}
+function accountmanagerSheet_() {
+  return getSheetOrThrow_(ACCOUNTMANAGER_SHEET);
+}
+function dropshipSheet_() {
+  return getSheetOrThrow_(DROPSHIP_SHEET);
+}
+function invoiceSheet_() {
+  return getSheetOrThrow_(INVOICE_SHEET);
+}
+
+function findSupplierByKey_(key) {
+  const sh = suppliersSheet_();
+  const values = sh.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    const supplier = String(values[i][0] || "").trim();
+    const k = String(values[i][2] || "").trim();
+    if (k && k === key && supplier) return supplier;
+  }
+  return "";
+}
+
+function findKeyBySupplier_(supplierName) {
+  const needle = String(supplierName || "").trim().toLowerCase();
+  if (!needle) return "";
+  const sh = suppliersSheet_();
+  const values = sh.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    const supplier = String(values[i][0] || "").trim().toLowerCase();
+    const key = String(values[i][2] || "").trim();
+    if (supplier === needle) return key;
+  }
+  return "";
+}
+
+function buildSupplierMailMap_() {
+  const sh = suppliersSheet_();
+  const values = sh.getDataRange().getValues();
+  const map = {};
+  for (let i = 1; i < values.length; i++) {
+    const supplier = String(values[i][0] || "").trim();
+    const mail = String(values[i][1] || "").trim();
+    if (supplier && mail) map[supplier.toLowerCase()] = mail;
+  }
+  return map;
+}
+
+function buildSupplierKeyMap_() {
+  const sh = suppliersSheet_();
+  const values = sh.getDataRange().getValues();
+  const map = {};
+  for (let i = 1; i < values.length; i++) {
+    const supplier = String(values[i][0] || "").trim();
+    const key = String(values[i][2] || "").trim();
+    if (supplier && key) map[supplier.toLowerCase()] = key;
+  }
+  return map;
+}
+
+function findAccountmanagerByKey_(key) {
+  const sh = accountmanagerSheet_();
+  const values = sh.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    const accountmanager = String(values[i][0] || "").trim();
+    const mailAccountmanager = String(values[i][1] || "").trim();
+    const amKey = String(values[i][2] || "").trim();
+    if (amKey && amKey === key && accountmanager) {
+      return { accountmanager, mailAccountmanager };
+    }
+  }
+  return null;
+}
+
+function findMailByAccountmanager_(accountmanagerName) {
+  const needle = String(accountmanagerName || "").trim().toLowerCase();
+  if (!needle) return "";
+  const sh = accountmanagerSheet_();
+  const values = sh.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    const name = String(values[i][0] || "").trim().toLowerCase();
+    const mail = String(values[i][1] || "").trim();
+    if (name === needle) return mail;
+  }
+  return "";
+}
+
+function resolveAuthFromKey_(e) {
+  const supplierKey = String(e?.parameter?.supplierKey || "").trim();
+  if (!supplierKey) return { ok: false, error: "Missing supplierKey" };
+  if (MASTER_KEYS.includes(supplierKey)) {
+    return {
+      ok: true,
+      loginType: LOGIN_MASTER,
+      supplierKey,
+      supplier: MASTER_NAME,
+      accountmanager: "",
+      mailAccountmanager: "",
+    };
+  }
+  const supplier = findSupplierByKey_(supplierKey);
+  if (supplier) {
+    return {
+      ok: true,
+      loginType: LOGIN_SUPPLIER,
+      supplierKey,
+      supplier,
+      accountmanager: "",
+      mailAccountmanager: "",
+    };
+  }
+  const am = findAccountmanagerByKey_(supplierKey);
+  if (am) {
+    return {
+      ok: true,
+      loginType: LOGIN_ACCOUNTMANAGER,
+      supplierKey,
+      supplier: "",
+      accountmanager: am.accountmanager,
+      mailAccountmanager: am.mailAccountmanager,
+    };
+  }
+  return { ok: false, error: "Unauthorized" };
+}
+
+function requireRoles_(e, roles) {
+  const auth = resolveAuthFromKey_(e);
+  if (!auth.ok || !roles.includes(auth.loginType)) {
+    throw new Error("Unauthorized");
+  }
+  return auth;
+}
+
+function normalizeMode_(mode) {
+  const m = String(mode || MODE_DROPSHIP).trim().toLowerCase();
+  return m === MODE_INVOICE ? MODE_INVOICE : MODE_DROPSHIP;
+}
+
+function getSheetOrThrow_(name) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(name);
+  if (!sh) throw new Error(`Sheet not found: ${name}`);
+  return sh;
+}
+
+function read_(sh) {
+  const values = sh.getDataRange().getValues();
+  const headers = values[0].map(String);
+  const rows = values.slice(1);
+  const idx = {};
+  headers.forEach((h, i) => (idx[h] = i));
+  return { headers, rows, idx };
+}
+
+function mustHave_(idx, headers) {
+  for (const h of headers) {
+    if (idx[h] === undefined) throw new Error(`Missing column header: ${h}`);
+  }
+}
+
+function indexMap_(headers) {
+  const idx = {};
+  headers.forEach((h, i) => (idx[String(h)] = i));
+  return idx;
+}
+
+function isTruthy_(v) {
+  const s = String(v || "").trim().toUpperCase();
+  return s === "TRUE" || s === "YES" || s === "1";
+}
+
+function formatTs_(v) {
+  if (!v) return "";
+  try {
+    const d = v instanceof Date ? v : new Date(v);
+    return Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+  } catch (_) {
+    return String(v);
+  }
+}
+
+function output_(obj, e) {
+  const json = JSON.stringify(obj);
+  const cb = e && e.parameter && e.parameter.callback ? String(e.parameter.callback) : "";
+  const body = cb ? `${cb}(${json});` : json;
+  const out = ContentService.createTextOutput(body);
+  out.setMimeType(ContentService.MimeType.JAVASCRIPT);
+  return out;
+}
