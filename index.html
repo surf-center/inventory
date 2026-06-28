@@ -52,7 +52,9 @@
     .input{
       width:100%; padding:12px 14px; border-radius:16px; border:1px solid var(--border);
       font-family:'Poppins',sans-serif; font-weight:500; font-size:16px; background:#fff;
+      outline:none;
     }
+    .input:focus{ border-color:#9ca3af; }
 
     .filterSelect{
       padding:12px 14px; border-radius:16px; border:1px solid var(--border);
@@ -75,6 +77,22 @@
     .searchRow .input{ flex:1; }
     .filterRow{ display:flex; gap:8px; flex-wrap:wrap; }
     .filterRow .filterSelect{ flex:1; min-width:120px; }
+
+    @media(max-width:640px){
+      .mobileSearchBar{
+        position:sticky; top:0; z-index:100;
+        background:rgba(252,252,252,.97); backdrop-filter:blur(10px);
+        padding:10px 12px 8px; margin:0 -12px 10px;
+      }
+      .mobileSearchBar .input{
+        font-size:17px; padding:14px 16px; border-radius:18px;
+        border:1.5px solid var(--border); background:#fff;
+        box-shadow:0 2px 12px rgba(0,0,0,.08);
+      }
+      .mobileSearchBar .input:focus{ outline:none; border-color:#9ca3af; }
+      .mobileSearchBar .filterRow{ margin-top:6px; }
+      .mobileSearchBar .filterRow .filterSelect{ font-size:14px; padding:10px 12px; }
+    }
 
     .activeFilters{ display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
     .filterChip{
@@ -99,11 +117,19 @@
     /* Mobile cards - compact */
     .productList{ display:flex; flex-direction:column; gap:8px; }
     .pCard{ border:1px solid var(--border); border-radius:16px; background:#fff; overflow:hidden; }
-    .pRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; }
+    .pRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
     .pName{ font-weight:500; font-size:14px; line-height:1.2; flex:1; min-width:0; word-break:break-word; display:flex; align-items:center; }
     .pActions{ display:flex; gap:6px; align-items:center; flex-shrink:0; }
     .pTiny{ padding:8px 10px; border-radius:12px; font-weight:700; font-size:13px; }
     .pToggle{ padding:8px 10px; border-radius:12px; color:#111; font-size:13px; }
+    .pIconBtn{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:36px; height:36px; border-radius:12px; border:1px solid var(--border);
+      background:#fff; cursor:pointer; flex-shrink:0; -webkit-tap-highlight-color:transparent;
+      appearance:none; -webkit-appearance:none;
+    }
+    .pIconBtn:hover{ background:#f3f4f6; }
+    .pIconBtnPrimary{ background:var(--accent); border-color:var(--accent); }
 
     .pDetails{ display:none; padding:8px 12px 12px; border-top:1px solid #eee; background:var(--soft); }
     .pDetails.open{ display:block; }
@@ -159,8 +185,10 @@
     .field input,.field textarea{
       width:100%; padding:10px 12px; border-radius:14px; border:1px solid var(--border);
       font-family:'Poppins',sans-serif; font-weight:500; font-size:16px; background:#fff;
+      outline:none;
     }
-    .field textarea{ min-height:120px; resize:vertical; font-weight:300; }
+    .field input:focus,.field textarea:focus{ border-color:#9ca3af; }
+    .field textarea{ min-height:80px; resize:vertical; font-weight:300; }
 
     .cartList{ margin:10px 0 0; border:1px solid var(--border); border-radius:16px; overflow:hidden; }
     .cartRow{ display:flex; justify-content:space-between; gap:10px; padding:12px; border-bottom:1px solid #eee; }
@@ -239,15 +267,14 @@
 
     <img src="./logo.png" alt="Logo" class="logo" onerror="this.style.display='none';">
 
-    <div class="searchArea">
+    <div class="searchArea mobileSearchBar">
       <div class="searchRow">
         <input id="searchInput" class="input" placeholder="Search product or EAN..." disabled>
       </div>
       <div class="filterRow">
         <select id="filterCategory" class="filterSelect" disabled><option value="">All categories</option></select>
-        <select id="filterSupplier" class="filterSelect" disabled><option value="">All suppliers</option></select>
-        <select id="filterSeason" class="filterSelect" disabled><option value="">All seasons</option></select>
-        <button id="clearFiltersBtn" class="btn" style="flex-shrink:0; display:none;">Clear</button>
+        <select id="filterSupplier" class="filterSelect" disabled><option value="">All brands</option></select>
+        <button id="clearFiltersBtn" class="btn" style="flex-shrink:0; display:none; padding:10px 12px;">&#x2715;</button>
       </div>
       <div id="activeFilters" class="activeFilters"></div>
     </div>
@@ -281,40 +308,40 @@
     </div>
   </div>
 
-  <!-- Desktop floating CART -->
+  <!-- Desktop floating LEAD -->
   <div class="cartFab" id="cartBtn" style="display:none;">
-    <span>Cart</span><span class="badge" id="cartBadge">0</span>
+    <span>Enter contact</span><span class="badge" id="cartBadge">0</span>
   </div>
 
-  <!-- Mobile bottom cart bar -->
+  <!-- Mobile bottom lead bar -->
   <div class="cartBar" id="cartBar" style="display:none;">
     <div class="cartBarInner">
       <button class="cartBarBtn" id="cartBarBtn">
-        Cart <span class="badge" id="cartBarBadge">0</span>
+        Enter contact <span class="badge" id="cartBarBadge">0</span>
       </button>
     </div>
   </div>
 
-  <!-- Cart / Lead modal -->
+  <!-- Lead modal -->
   <div id="cartOverlay" class="overlay">
     <div class="modal">
       <div class="modalHeader">
-        <span>Enter details</span>
+        <span>Enter contact</span>
         <div class="actions"><button id="cartClose" class="btn">Close</button></div>
       </div>
       <div class="modalBody">
         <div class="formGrid">
           <div class="field"><label>Name</label><input id="custName" placeholder="Name"></div>
           <div class="field"><label>Phone number</label><input id="phone" placeholder="Phone number" inputmode="tel"></div>
-          <div class="field"><label>Mail</label><input id="mail" placeholder="Mail" inputmode="email"></div>
+          <div class="field"><label>Email</label><input id="mail" placeholder="Email" inputmode="email"></div>
           <div class="field"><label>Note</label><textarea id="note1" placeholder="Note"></textarea></div>
         </div>
         <div style="margin-top:14px; font-weight:700;">Items:</div>
         <div id="cartList" class="cartList"></div>
-        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px; flex-wrap:wrap;">
-          <button id="clearCartBtn" class="btn">Clear</button>
-          <button id="saveLeadBtn" class="btn btnPrimary">Save</button>
-        </div>
+        <button id="waBtn" style="width:100%; margin-top:12px; height:52px; border-radius:16px; background:#25D366; color:#fff; border:none; font-family:'Poppins',sans-serif; font-weight:700; font-size:16px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; appearance:none; -webkit-appearance:none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Send via WhatsApp
+        </button>
         <div id="cartErr" class="err"></div>
         <div id="cartTick" class="tick" style="display:none;"><span class="dot">v</span><span> Saved</span></div>
       </div>
@@ -366,7 +393,7 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw4yYgduChplwaiYn5LSkktZokEUaESe3v1987rrMj6-wGvpD6M-z9C2jy0eyUgO1ZU3w/exec";
+    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwxY1CyySY3QDVzP5bNQnHxmBpKlbAB2NHQKbkCpKSjVhCav-sEjYdr8ZnvZq5ZfvVDYA/exec";
     const CALCULATOR_URL = "https://surf-center.github.io/calculator/";
     const PAGE_SIZE = 20;
     const CACHE_KEY = "sc_products_cache";
@@ -436,7 +463,7 @@
     const loginKey=document.getElementById("loginKey"),loginBtn=document.getElementById("loginBtn"),loginErr=document.getElementById("loginErr");
     const accountBtn=document.getElementById("accountBtn"),logoutBtn=document.getElementById("logoutBtn");
     const searchInput=document.getElementById("searchInput");
-    const filterCategory=document.getElementById("filterCategory"),filterSupplier=document.getElementById("filterSupplier"),filterSeason=document.getElementById("filterSeason");
+    const filterCategory=document.getElementById("filterCategory"),filterSupplier=document.getElementById("filterSupplier");
     const clearFiltersBtn=document.getElementById("clearFiltersBtn"),activeFiltersEl=document.getElementById("activeFilters");
     const tbody=document.getElementById("tbody"),mobileProducts=document.getElementById("mobileProducts");
     const meta=document.getElementById("meta"),err=document.getElementById("err");
@@ -444,7 +471,7 @@
     const cartBarBtn=document.getElementById("cartBarBtn"),cartBarBadge=document.getElementById("cartBarBadge");
     const cartOverlay=document.getElementById("cartOverlay"),cartClose=document.getElementById("cartClose");
     const cartListEl=document.getElementById("cartList"),cartErr=document.getElementById("cartErr"),cartTick=document.getElementById("cartTick");
-    const clearCartBtn=document.getElementById("clearCartBtn"),saveLeadBtn=document.getElementById("saveLeadBtn");
+    const clearCartBtn=document.getElementById("clearCartBtn"),saveLeadBtn=document.getElementById("saveLeadBtn"),waBtn=document.getElementById("waBtn");
     const custName=document.getElementById("custName"),phone=document.getElementById("phone"),mail=document.getElementById("mail"),note1=document.getElementById("note1");
     const accountOverlay=document.getElementById("accountOverlay"),accountClose=document.getElementById("accountClose");
     const accountTitle=document.getElementById("accountTitle"),accountSub=document.getElementById("accountSub");
@@ -456,33 +483,29 @@
     let visibleCount=PAGE_SIZE;
 
     // ---- Filters ----
-    function getFilters(){ return { q:searchInput.value.trim().toLowerCase(), category:filterCategory.value, supplier:filterSupplier.value, season:filterSeason.value }; }
-    function filtersActive(){ const f=getFilters(); return f.q||f.category||f.supplier||f.season; }
+    function getFilters(){ return { q:searchInput.value.trim().toLowerCase(), category:filterCategory.value, supplier:filterSupplier.value }; }
+    function filtersActive(){ const f=getFilters(); return f.q||f.category||f.supplier; }
 
     function matchesFilters(r,f){
       if(f.q){ const tokens=f.q.split(/\s+/).filter(Boolean); const hay=((r.name||"")+" "+(r.ean_code||"")).toLowerCase(); if(!tokens.every(t=>hay.includes(t)))return false; }
       if(f.category&&(r._attribute_set||"")!==f.category)return false;
       if(f.supplier&&(r.manufacturer||"")!==f.supplier)return false;
-      if(f.season&&(r.season||"")!==f.season)return false;
       return true;
     }
 
     function populateDropdowns(){
       const cats=[...new Set(allRows.map(r=>r._attribute_set||"").filter(Boolean))].sort();
       const sups=[...new Set(allRows.map(r=>r.manufacturer||"").filter(Boolean))].sort();
-      const seas=[...new Set(allRows.map(r=>r.season||"").filter(Boolean))].sort();
       filterCategory.innerHTML=`<option value="">All categories</option>`+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
-      filterSupplier.innerHTML=`<option value="">All suppliers</option>`+sups.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("");
-      filterSeason.innerHTML=`<option value="">All seasons</option>`+seas.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("");
-      filterCategory.disabled=false; filterSupplier.disabled=false; filterSeason.disabled=false;
+      filterSupplier.innerHTML=`<option value="">All brands</option>`+sups.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("");
+      filterCategory.disabled=false; filterSupplier.disabled=false;
     }
 
     function updateActiveFilters(){
       const f=getFilters();
       activeFiltersEl.innerHTML="";
       [f.category&&{label:f.category,clear:()=>{filterCategory.value="";onFilterChange();}},
-       f.supplier&&{label:f.supplier,clear:()=>{filterSupplier.value="";onFilterChange();}},
-       f.season&&{label:f.season,clear:()=>{filterSeason.value="";onFilterChange();}}]
+       f.supplier&&{label:f.supplier,clear:()=>{filterSupplier.value="";onFilterChange();}}]
       .filter(Boolean).forEach(chip=>{
         const el=document.createElement("div"); el.className="filterChip";
         el.innerHTML=`<span>${esc(chip.label)}</span><button>x</button>`;
@@ -503,8 +526,7 @@
     searchInput.addEventListener("input",()=>onFilterChange(true));
     filterCategory.addEventListener("change",()=>onFilterChange(true));
     filterSupplier.addEventListener("change",()=>onFilterChange(true));
-    filterSeason.addEventListener("change",()=>onFilterChange(true));
-    clearFiltersBtn.onclick=()=>{ searchInput.value=""; filterCategory.value=""; filterSupplier.value=""; filterSeason.value=""; onFilterChange(true); };
+    clearFiltersBtn.onclick=()=>{ searchInput.value=""; filterCategory.value=""; filterSupplier.value=""; onFilterChange(true); };
 
     // ---- Cart ----
     function setCartBadge(){ const n=String(cart.length); document.getElementById("cartBadge").textContent=n; cartBarBadge.textContent=n; }
@@ -512,7 +534,7 @@
     function removeFromCart(ean){ cart=cart.filter(x=>x.ean!==ean); setCartBadge(); renderCart(); }
     function renderCart(){
       if(!cart.length){ cartListEl.innerHTML=`<div class="cartRow"><div class="small">No items.</div></div>`; return; }
-      cartListEl.innerHTML=cart.map(it=>`<div class="cartRow"><div class="left"><div style="font-weight:500;">${esc(it.product||"")}</div><div class="small">Retail: ${esc(fmtPrice(it.retailPrice))}</div></div><div><button class="btn" data-remove="${esc(it.ean)}">Remove</button></div></div>`).join("");
+      cartListEl.innerHTML=cart.map(it=>`<div class="cartRow"><div class="left"><div style="font-weight:500;">${esc(it.product||"")}</div></div><div><button class="btn" data-remove="${esc(it.ean)}">Remove</button></div></div>`).join("");
       cartListEl.querySelectorAll("button[data-remove]").forEach(b=>b.addEventListener("click",()=>removeFromCart(b.getAttribute("data-remove"))));
     }
 
@@ -523,11 +545,56 @@
     logoutBtn.onclick=logout;
 
     // ---- Cart modal ----
-    function openCart(){ cartErr.textContent=""; cartTick.style.display="none"; renderCart(); cartOverlay.classList.add("active"); }
+    const LEAD_CACHE="sc_lead_form";
+    function saveLeadForm(){ localStorage.setItem(LEAD_CACHE,JSON.stringify({name:custName.value,phone:phone.value,mail:mail.value,note:note1.value})); }
+    function restoreLeadForm(){ try{ const d=JSON.parse(localStorage.getItem(LEAD_CACHE)||"{}"); if(d.name)custName.value=d.name; if(d.phone)phone.value=d.phone; if(d.mail)mail.value=d.mail; if(d.note)note1.value=d.note; }catch(e){} }
+
+    let _autoSaveTimer=null;
+    function scheduleAutoSave(){
+      saveLeadForm();
+      clearTimeout(_autoSaveTimer);
+      const name=custName.value.trim(),p=phone.value.trim(),m=mail.value.trim(),n1=note1.value.trim();
+      if(!name||((!p)&&(!m))||!cart.length) return;
+      _autoSaveTimer=setTimeout(async()=>{
+        try{
+          const payload={name,phoneNumber:p,mail:m,note1:n1,items:cart};
+          const url=`${APPS_SCRIPT_WEBAPP_URL}?action=submitLead&key=${encodeURIComponent(currentKey)}&payload=${encodeURIComponent(JSON.stringify(payload))}`;
+          await jsonp(url);
+        }catch(e){}
+      },3000);
+    }
+    [custName,phone,mail,note1].forEach(el=>el.addEventListener("input",scheduleAutoSave));
+
+    function openCart(){ cartErr.textContent=""; cartTick.style.display="none"; restoreLeadForm(); renderCart(); cartOverlay.classList.add("active"); }
     function closeCart(){ cartOverlay.classList.remove("active"); }
     cartBtn.onclick=openCart; cartBarBtn.onclick=openCart; cartClose.onclick=closeCart;
     cartOverlay.addEventListener("click",e=>{ if(e.target===cartOverlay)closeCart(); });
     clearCartBtn.onclick=()=>{ cart=[]; setCartBadge(); renderCart(); };
+
+    waBtn.onclick=async()=>{
+      const name=custName.value.trim(),p=phone.value.trim(),m=mail.value.trim(),n1=note1.value.trim();
+      if(!name){cartErr.textContent="Name is required.";return;}
+      if(!p&&!m){cartErr.textContent="Phone number or email is required.";return;}
+      if(!cart.length){cartErr.textContent="No items added.";return;}
+      cartErr.textContent="";
+      // Save to spreadsheet
+      const payload={name,phoneNumber:p,mail:m,note1:n1,items:cart};
+      const url2=`${APPS_SCRIPT_WEBAPP_URL}?action=submitLead&key=${encodeURIComponent(currentKey)}&payload=${encodeURIComponent(JSON.stringify(payload))}`;
+      try{ await jsonp(url2); }catch(e){}
+      // Open WhatsApp
+      let msg="*New lead - Surf Center*\n\n";
+      if(name) msg+=`*Name:* ${name}\n`;
+      if(p)    msg+=`*Phone:* ${p}\n`;
+      if(m)    msg+=`*Email:* ${m}\n`;
+      if(cart.length){ msg+=`\n*Products:*\n`; cart.forEach(it=>{ msg+=`- ${it.product}\n`; }); }
+      if(n1) msg+=`\n*Note:* ${n1}`;
+      const url=`https://wa.me/31683599751?text=${encodeURIComponent(msg.trim())}`;
+      window.open(url,"_blank");
+      cart=[]; setCartBadge(); renderCart();
+      custName.value=""; phone.value=""; mail.value=""; note1.value="";
+      localStorage.removeItem(LEAD_CACHE);
+      cartOverlay.classList.remove("active");
+    };
 
     // ---- Calculator modal ----
     function openCalculatorForRow(r){
@@ -620,7 +687,7 @@
       const total=allFiltered.length;
       const rows=allFiltered.slice(0,visibleCount);
 
-      meta.textContent=(f.category||f.supplier||f.season||f.q)?`${total} of ${allRows.length} items`:`${allRows.length} items`;
+      meta.textContent=(f.category||f.supplier||f.q)?`${total} of ${allRows.length} items`:`${allRows.length} items`;
 
       // Desktop
       tbody.innerHTML="";
@@ -646,7 +713,7 @@
             const whD=bd.length?`<div class="whBreakdown">${bd.map(x=>`<div class="whLine">${esc(x.label)}: ${x.qty}</div>`).join("")}</div>`:"";
             const tr2=document.createElement("tr"); tr2.className="detailsRow";
             const td=document.createElement("td"); td.colSpan=5;
-            td.innerHTML=`<div class="kv" style="grid-template-columns:130px 1fr;"><div class="k">EAN</div><div class="v">${esc(r.ean_code||"")}</div><div class="k">Supplier</div><div class="v">${esc(r.manufacturer||"")}</div><div class="k">Category</div><div class="v">${esc(r._attribute_set||"")}</div><div class="k">Season</div><div class="v">${esc(r.season||"")}</div><div class="k">Retail price</div><div class="v">${esc(fmtPrice(r.retailPrice))}</div><div class="k">Stock (SC)</div><div class="v">${own}</div><div class="k">Warehouse</div><div class="v">${whD}</div></div>`;
+            td.innerHTML=`<div class="kv" style="grid-template-columns:130px 1fr;"><div class="k">EAN</div><div class="v">${esc(r.ean_code||"")}</div><div class="k">Brand</div><div class="v">${esc(r.manufacturer||"")}</div><div class="k">Category</div><div class="v">${esc(r._attribute_set||"")}</div>${r.season?`<div class="k">Season</div><div class="v">${esc(r.season)}</div>`:""}<div class="k">Stock</div><div class="v">${own}</div><div class="k">Warehouse</div><div class="v">${whD}</div></div>`;
             tr2.appendChild(td); tbody.appendChild(tr2);
           }
         });
@@ -668,7 +735,7 @@
         const own=ownStock(r),wh=warehouseStock(r),tot=own+wh,dc=dotClass(stockStatus(r));
         const bd=warehouseBreakdown(r);
         const whD=bd.map(x=>`<div class="whLine">${esc(x.label)}: ${x.qty}</div>`).join("");
-        return`<div class="pCard" data-id="${id}"><div class="pRow"><div class="pName"><span class="stockDot ${dc}"></span>${esc(r.name||"")}</div><div class="pActions"><button class="btn pToggle" data-toggle="${id}">${open?"Close":"Info"}</button><button class="btnCalc" data-calc="${id}">%</button><button class="btn btnPrimary pTiny" data-add="${id}">Add</button></div></div><div class="pDetails ${open?"open":""}" id="${id}"><div class="kv"><div class="k">Supplier</div><div class="v">${esc(r.manufacturer||"-")}</div><div class="k">Category</div><div class="v">${esc(r._attribute_set||"-")}</div><div class="k">Season</div><div class="v">${esc(r.season||"-")}</div><div class="k">Retail</div><div class="v">${esc(fmtPrice(r.retailPrice))}</div><div class="k">Stock (SC)</div><div class="v">${own}</div><div class="k">Warehouse</div><div class="v">${wh}</div><div class="k">Total</div><div class="v">${tot}</div>${whD?`<div class="k">Detail</div><div class="v"><div class="whBreakdown">${whD}</div></div>`:""}<div class="k">EAN</div><div class="v">${esc(r.ean_code||"-")}</div></div></div></div>`;
+        return`<div class="pCard" data-id="${id}"><div class="pRow" data-toggle="${id}"><div class="pName"><span class="stockDot ${dc}"></span>${esc(r.name||"")}</div><div class="pActions"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5" style="flex-shrink:0;transition:transform .2s;${open?"transform:rotate(180deg)":""}"><polyline points="6 9 12 15 18 9"/></svg><button class="pIconBtn pIconBtnPrimary" data-add="${id}" title="Add"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div></div><div class="pDetails ${open?"open":""}" id="${id}"><div style="display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;"><div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px;">Surfcenter</div><div style="font-weight:700;font-size:18px;">${own}</div></div><div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px;">Warehouse</div><div style="font-weight:700;font-size:18px;">${wh}</div></div><div style="flex:1;padding:10px 12px;text-align:center;"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px;">Total</div><div style="font-weight:700;font-size:18px;">${tot}</div></div></div>${whD?`<div style="margin-bottom:10px;"><div class="whBreakdown">${whD}</div></div>`:""}<div class="kv" style="margin-bottom:8px;">${r.manufacturer?`<div class="k">Brand</div><div class="v">${esc(r.manufacturer)}</div>`:""}<div class="k">Category</div><div class="v">${esc(r._attribute_set||"-")}</div>${r.season?`<div class="k">Season</div><div class="v">${esc(r.season)}</div>`:""}<div class="k">EAN</div><div class="v">${esc(r.ean_code||"-")}</div></div></div></div>`;
       }).join("");
 
       if(total>visibleCount){
@@ -676,8 +743,9 @@
         mobileProducts.querySelector(".showMoreBtn").onclick=()=>{ visibleCount+=PAGE_SIZE; renderProducts(); };
       }
 
-      mobileProducts.querySelectorAll("button[data-toggle]").forEach(btn=>btn.addEventListener("click",()=>{
-        const id=btn.getAttribute("data-toggle");
+      mobileProducts.querySelectorAll("[data-toggle]").forEach(row=>row.addEventListener("click",e=>{
+        if(e.target.closest("[data-add]")||e.target.closest("[data-calc]")) return;
+        const id=row.getAttribute("data-toggle");
         mobileExpanded.has(id)?mobileExpanded.delete(id):mobileExpanded.add(id);
         renderProducts();
       }));
@@ -709,6 +777,7 @@
         cart=[]; setCartBadge(); renderCart();
         custName.value=""; phone.value=""; mail.value=""; note1.value="";
         cartTick.style.display="";
+        localStorage.removeItem(LEAD_CACHE);
       }catch(e){ cartErr.textContent="Error saving: "+e.message; }
       finally{ saveLeadBtn.disabled=false; saveLeadBtn.textContent="Save"; }
     };
@@ -739,3 +808,4 @@
   </script>
 </body>
 </html>
+
