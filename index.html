@@ -540,7 +540,7 @@
 
     // ---- Auth ----
     function showLogin(){ loginView.style.display="block"; appView.style.display="none"; cartBtn.style.display="none"; cartBar.style.display="none"; loginErr.textContent=""; loginKey.value=""; loginKey.focus(); }
-    function showApp(){ loginView.style.display="none"; appView.style.display="block"; cartBtn.style.display=""; cartBar.style.display=""; }
+    function showApp(){ loginView.style.display="none"; appView.style.display="block"; cartBtn.style.display=""; cartBar.style.display=""; searchInput.disabled=false; filterCategory.disabled=false; filterSupplier.disabled=false; }
     function logout(){ localStorage.removeItem("employeeKey"); currentKey=""; showLogin(); }
     logoutBtn.onclick=logout;
 
@@ -770,7 +770,7 @@
         if(!res||!res.ok)throw new Error(res?.error||"Login failed");
         localStorage.setItem("employeeKey",key); currentKey=key;
         showApp(); setCartBadge();
-        localStorage.setItem(CACHE_KEY,JSON.stringify({key,res}));
+        localStorage.setItem(CACHE_KEY,JSON.stringify({key,res,ts:Date.now()}));
         applyData(res,false);
       }catch(e){ loginErr.textContent=e.message; }
       finally{ loginBtn.disabled=false; loginBtn.textContent="Login"; }
