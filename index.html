@@ -393,7 +393,7 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz1Gg-kBsSRGW68e0pW5huJ07xnL2sBjd2C2oFwoYt4Pf6ZJW8z3k9vFapMqGRnWakwBg/exec";
+    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyLdXTEunH2YlNNyCLT474aqpJvMFC_8TX5CNz49Gw-1-YUj482DfPV-5StKgyHP9em5A/exec";
     const CALCULATOR_URL = "https://surf-center.github.io/calculator/";
     const PAGE_SIZE = 20;
     const CACHE_KEY = "sc_products_cache";
@@ -641,7 +641,7 @@
       populateDropdowns(); updateActiveFilters(); renderProducts();
     }
 
-    const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+    const CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
 
     async function loadProducts(){
       err.textContent="";
@@ -786,3 +786,4 @@
   </script>
 </body>
 </html>
+
