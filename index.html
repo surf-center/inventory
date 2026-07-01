@@ -440,7 +440,7 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbygRld-1K-wjleQYBy4pkfVPSjlACZ0ETNJrvzilPiIGzZjbnYl4Ww_0X_E-KWxLwc8VQ/exec";
+    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyr_mHxC2WhbEolmOoTzmrQm0j8uNUFRXrrDftB6CoRU6PyJEvmpnFyEsajhpXItS2r_g/exec";
     const CALCULATOR_URL = "https://surf-center.github.io/calculator/";
     const PAGE_SIZE = 20;
     const CACHE_KEY = "sc_products_cache";
@@ -681,18 +681,40 @@
     }
 
     // ---- Products ----
-    function applyData(res, fromCache){
+    function applyData(res, fromCache, opts){
       isAdmin=!!res.isAdmin;
       currentUserName=(res.user&&res.user.name)?res.user.name:"";
       accountBtn.textContent=currentUserName||"Account";
       inkoopBtn.style.display=isAdmin?"":"none";
-      if(isAdmin) loadMinStock();
+      const isPartial=!!(opts&&opts.partial);
+      if(isAdmin && !isPartial) loadMinStock();
       allRows=Array.isArray(res.rows)?res.rows:[];
 
       expanded.clear(); mobileExpanded.clear(); visibleCount=PAGE_SIZE;
-      meta.textContent=`${allRows.length} items`+(fromCache?" (cached)":"");
+      if(isPartial){
+        meta.textContent=`${allRows.length} of ${opts.total||allRows.length} items (loading...)`;
+      } else {
+        meta.textContent=`${allRows.length} items`+(fromCache?" (cached)":"");
+      }
       searchInput.disabled=false;
       populateDropdowns(); updateActiveFilters(); renderProducts();
+    }
+
+    // Fetches the full catalog in batches (server paginates via action=data&page=N)
+    // instead of one multi-MB response, so the first batch can render immediately.
+    async function fetchAllData(key, onPartial){
+      let page=0, merged=null;
+      while(true){
+        const res=await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=data&key=${encodeURIComponent(key)}&page=${page}`);
+        if(!res||!res.ok) throw new Error(res?.error||"Could not load data");
+        if(!merged) merged={ok:true,isAdmin:res.isAdmin,user:res.user,rows:[]};
+        merged.rows=merged.rows.concat(Array.isArray(res.rows)?res.rows:[]);
+        const hasMore=!!res.hasMore;
+        if(onPartial) onPartial(merged, res.total!=null?res.total:merged.rows.length, hasMore);
+        if(!hasMore) break;
+        page++;
+      }
+      return merged;
     }
 
     const CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
@@ -957,11 +979,16 @@
       loginErr.textContent=""; const key=loginKey.value.trim();
       if(!key){loginErr.textContent="Please enter a key.";return;}
       loginBtn.disabled=true; loginBtn.textContent="Login...";
+      let entered=false;
       try{
-        const res=await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=data&key=${encodeURIComponent(key)}`);
-        if(!res||!res.ok)throw new Error(res?.error||"Login failed");
-        localStorage.setItem("employeeKey",key); currentKey=key;
-        showApp(); setCartBadge();
+        const res=await fetchAllData(key,(partial,total,hasMore)=>{
+          if(!entered){
+            entered=true;
+            localStorage.setItem("employeeKey",key); currentKey=key;
+            showApp(); setCartBadge();
+          }
+          applyData(partial,false,{partial:hasMore,total});
+        });
         localStorage.setItem(CACHE_KEY,JSON.stringify({key,res,ts:Date.now()}));
         applyData(res,false);
       }catch(e){ loginErr.textContent=e.message; }
@@ -969,11 +996,17 @@
     };
 
     // ---- Auto-login ----
-    // Kick off data fetch immediately (before DOMContentLoaded) to reduce cold-start wait
-    let _earlyFetch=null;
+    // Kick off the batched data fetch immediately (before DOMContentLoaded) to reduce cold-start wait.
+    // Partial batches are buffered until the DOM is ready, then applied.
+    let _earlyFetch=null, _earlyPartial=null;
     {
       const _k=(localStorage.getItem("employeeKey")||"").trim();
-      if(_k) _earlyFetch=jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=data&key=${encodeURIComponent(_k)}`);
+      if(_k){
+        _earlyFetch=fetchAllData(_k,(partial,total,hasMore)=>{
+          _earlyPartial={partial,total,hasMore};
+          if(document.readyState!=="loading") applyData(partial,false,{partial:hasMore,total});
+        });
+      }
     }
 
     document.addEventListener("DOMContentLoaded",()=>{
@@ -991,9 +1024,9 @@
       }
       if(cacheIsFresh){_earlyFetch=null;return;}
       if(!cached) { meta.textContent="Loading..."; tbody.innerHTML=`<tr><td colspan="5" class="small">Loading...</td></tr>`; mobileProducts.innerHTML=`<div class="small">Loading...</div>`; }
-      (_earlyFetch||jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=data&key=${encodeURIComponent(currentKey)}`))
+      if(_earlyPartial) applyData(_earlyPartial.partial,false,{partial:_earlyPartial.hasMore,total:_earlyPartial.total});
+      (_earlyFetch||fetchAllData(currentKey,(partial,total,hasMore)=>applyData(partial,false,{partial:hasMore,total})))
         .then(res=>{
-          if(!res||!res.ok)throw new Error(res?.error||"Could not load data");
           localStorage.setItem(CACHE_KEY,JSON.stringify({key:currentKey,res,ts:Date.now()}));
           applyData(res,false);
         })
