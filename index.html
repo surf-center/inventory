@@ -274,7 +274,7 @@
     <div class="topbar">
       <div></div>
       <div style="display:flex; gap:8px; align-items:center;">
-        <button id="inkoopBtn" class="btn" style="display:none;">üì¶ Inkoop</button>
+        <button id="inkoopBtn" class="btn" style="display:none;">Ô£ø√º√¨¬∂ Inkoop</button>
         <button id="accountBtn" class="btn">Account</button>
         <button id="logoutBtn" class="btn" title="Log out" style="padding:9px 11px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -400,7 +400,7 @@
   <div id="inkoopOverlay" class="overlay">
     <div class="modal" style="width:min(720px,96vw);">
       <div class="modalHeader">
-        <span>üì¶ Inkoop</span>
+        <span>Ô£ø√º√¨¬∂ Inkoop</span>
         <div class="actions"><button id="inkoopClose" class="btn">Sluiten</button></div>
       </div>
       <div class="modalBody">
@@ -419,7 +419,7 @@
         <div id="inkoopList" class="inkoopList"></div>
         <div class="inkoopBottom">
           <button id="inkoopOrderBtn" style="width:100%;height:50px;border-radius:16px;background:#0f7b2f;color:#fff;border:none;font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;appearance:none;-webkit-appearance:none;">
-            üì¶ Maak bestelling <span id="inkoopOrderBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:#fff;color:#111;font-weight:700;font-size:13px;">0</span>
+            Ô£ø√º√¨¬∂ Maak bestelling <span id="inkoopOrderBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:#fff;color:#111;font-weight:700;font-size:13px;">0</span>
           </button>
         </div>
       </div>
@@ -440,7 +440,7 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyTwlcO5qgCe1rNXQxd57dxMF6TFbbZlWjeveyFKm8xQiJnRY2OlXl07eBWheb_vFbnpg/exec";
+    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbygRld-1K-wjleQYBy4pkfVPSjlACZ0ETNJrvzilPiIGzZjbnYl4Ww_0X_E-KWxLwc8VQ/exec";
     const CALCULATOR_URL = "https://surf-center.github.io/calculator/";
     const PAGE_SIZE = 20;
     const CACHE_KEY = "sc_products_cache";
@@ -914,7 +914,7 @@
           <span class="stockDot ${dc}"></span>
           <div class="inkoopName">${esc(r.name||"")}${isLow?`<span class="lowBadge"></span>`:""}</div>
           <div class="inkoopStock">SC:${own}${src?" / "+srcQty:""}</div>
-          <div style="display:flex;align-items:center;gap:3px;font-size:12px;color:var(--muted);flex-shrink:0;">min<input class="inkoopMinInput" type="number" min="0" value="${min||""}" placeholder="‚Äì" data-ean="${esc(r.ean_code||"")}"></div>
+          <div style="display:flex;align-items:center;gap:3px;font-size:12px;color:var(--muted);flex-shrink:0;">min<input class="inkoopMinInput" type="number" min="0" value="${min||""}" placeholder="‚Äö√Ñ√¨" data-ean="${esc(r.ean_code||"")}"></div>
           <button class="pIconBtn${inCart?" pIconBtnPrimary":""}" data-add-inkoop="${esc(r.ean_code||"")}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${inCart?"white":"#111"}" stroke-width="3" stroke-linecap="round">
               ${inCart?`<polyline points="20 6 9 17 4 12"/>`:`<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>`}
@@ -946,9 +946,9 @@
       const src=inkoopSource.value;
       const srcLabel=src?(WAREHOUSE_LABELS[src]||src):"Leverancier";
       const date=new Date().toLocaleDateString("nl-NL",{day:"2-digit",month:"long",year:"numeric"});
-      const subject=`üì¶ Nabestelling Surf Center ‚Äî ${srcLabel}`;
-      const itemLines=inkoopCart.map(i=>`‚Ä¢ ${i.name}\n  EAN: ${i.ean}`).join("\n\n");
-      const body=`Hallo,\n\nGraag willen wij de volgende producten nabestellen:\n\n${itemLines}\n\nKunnen jullie de beschikbaarheid, levertijd en prijzen bevestigen?\n\nMet vriendelijke groet,\nTeam Surf Center\n\nüìÖ ${date}`;
+      const subject=`Ô£ø√º√¨¬∂ Nabestelling Surf Center ‚Äö√Ñ√Æ ${srcLabel}`;
+      const itemLines=inkoopCart.map(i=>`‚Äö√Ñ¬¢ ${i.name}\n  EAN: ${i.ean}`).join("\n\n");
+      const body=`Hallo,\n\nGraag willen wij de volgende producten nabestellen:\n\n${itemLines}\n\nKunnen jullie de beschikbaarheid, levertijd en prijzen bevestigen?\n\nMet vriendelijke groet,\nTeam Surf Center\n\nÔ£ø√º√¨√ñ ${date}`;
       window.location.href=`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     };
 
@@ -1005,5 +1005,3 @@
   </script>
 </body>
 </html>
-
-
