@@ -719,13 +719,14 @@
       currentUserName=(res.user&&res.user.name)?res.user.name:"";
       currentUserRole=(res.user&&res.user.role)?String(res.user.role).trim().toLowerCase():"";
       accountBtn.textContent=currentUserName||"Account";
-      inkoopBtn.style.display=isAdmin?"":"none";
-      // "inkoop" role: purchasing-only staff get the supplier cart instead of the customer-lead cart
+      // "inkoop" role: purchasing staff get the Inkoop (supplier order) view instead of the customer-lead cart.
+      // "sales" role (or any other/blank role): customer-lead cart, no Inkoop access.
       const isInkoopRole=currentUserRole==="inkoop";
+      inkoopBtn.style.display=isInkoopRole?"":"none";
       cartBtn.style.display=isInkoopRole?"none":"";
       cartBar.style.display=isInkoopRole?"none":"";
       const isPartial=!!(opts&&opts.partial);
-      if(isAdmin && !isPartial) loadMinStock();
+      if(isInkoopRole && !isPartial) loadMinStock();
       allRows=Array.isArray(res.rows)?res.rows:[];
 
       expanded.clear(); mobileExpanded.clear(); visibleCount=PAGE_SIZE;
