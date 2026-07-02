@@ -410,7 +410,7 @@
       <div class="modalBody">
         <div class="field" style="margin-bottom:14px;">
           <label>Leverancier</label>
-          <select id="inkoopCartSource" class="filterSelect" style="width:100%;"><option value="">Alle leveranciers</option></select>
+          <select id="inkoopCartSource" class="filterSelect" style="width:100%;"><option value="">Kies een leverancier...</option></select>
         </div>
         <div style="font-weight:700; margin-bottom:8px;">Producten:</div>
         <div id="inkoopCartList" class="cartList"></div>
@@ -418,6 +418,7 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
           Bestelling versturen
         </button>
+        <div id="inkoopCartErr" class="err"></div>
       </div>
     </div>
   </div>
@@ -467,7 +468,7 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwCyNxa099xK6Vh18EYu34iAuRJz-wx_fazIGxubtEqr720CevUqa4iGuodUrCQs8SHhQ/exec";
+    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbykYEFf09JLWcJ0tXiHZnT3hmOvwr6bDyv8CQ0NxPzaa5EDeY99LeStaR6XdVwZTsMh/exec";
     const CALCULATOR_URL = "https://surf-center.github.io/calculator/";
     const PAGE_SIZE = 20;
     const CACHE_KEY = "sc_products_cache";
@@ -561,6 +562,7 @@
     const mainOnlyLowWrap=document.getElementById("mainOnlyLowWrap"),mainOnlyLow=document.getElementById("mainOnlyLow");
     const inkoopCartOverlay=document.getElementById("inkoopCartOverlay"),inkoopCartClose=document.getElementById("inkoopCartClose");
     const inkoopCartSource=document.getElementById("inkoopCartSource"),inkoopCartList=document.getElementById("inkoopCartList"),inkoopCartSendBtn=document.getElementById("inkoopCartSendBtn");
+    const inkoopCartErr=document.getElementById("inkoopCartErr");
     const inkoopCartBtn=document.getElementById("inkoopCartBtn"),inkoopCartBadge=document.getElementById("inkoopCartBadge");
     const inkoopCartBar=document.getElementById("inkoopCartBar"),inkoopCartBarBtn=document.getElementById("inkoopCartBarBtn"),inkoopCartBarBadge=document.getElementById("inkoopCartBarBadge");
 
@@ -746,12 +748,9 @@
       inkoopCartBtn.style.display=isInkoopRole?"":"none";
       inkoopCartBar.style.display=isInkoopRole?"":"none";
       mainOnlyLowWrap.style.display=isInkoopRole?"":"none";
-      if(isInkoopRole && inkoopCartSource.options.length<=1){
-        inkoopCartSource.innerHTML=`<option value="">Alle leveranciers</option>`+
-          WAREHOUSE_KEYS.map(k=>`<option value="${k}">${WAREHOUSE_LABELS[k]||k}</option>`).join("");
-      }
+      if(isInkoopRole && inkoopCartSource.options.length<=1) populateLeverancierDropdown();
       const isPartial=!!(opts&&opts.partial);
-      if(isInkoopRole && !isPartial) loadMinStock();
+      if(isInkoopRole && !isPartial){ loadMinStock(); loadLeveranciers(); }
       allRows=Array.isArray(res.rows)?res.rows:[];
 
       expanded.clear(); mobileExpanded.clear(); visibleCount=PAGE_SIZE;
@@ -837,7 +836,8 @@
           const id=`${r.ean_code}__${i}`,own=ownStock(r),wh=warehouseStock(r),tot=own+wh,dc=dotClass(stockStatus(r));
           const tr=document.createElement("tr");
           const min=minStockMap[r.ean_code]||0, isLow=isInkoopRole&&min>0&&own<min;
-          const tdP=document.createElement("td"); tdP.innerHTML=`<span class="stockDot ${dc}"></span>${esc(r.name||"")}${isLow?`<span class="lowBadge"></span>`:""}`;
+          const noLevHtml=noLeverancierHtml(r,wh);
+          const tdP=document.createElement("td"); tdP.innerHTML=`<span class="stockDot ${dc}"></span>${esc(r.name||"")}${isLow?`<span class="lowBadge"></span>`:""}${noLevHtml}`;
           tr.appendChild(tdP);
           [String(own),String(wh),String(tot)].forEach(v=>tr.appendChild(Object.assign(document.createElement("td"),{textContent:v})));
           const tdA=document.createElement("td"); tdA.className="tdActions";
@@ -923,7 +923,7 @@
           ? `<button class="pIconBtn${inCart?" pIconBtnPrimary":""}" data-add="${id}" title="Toevoegen aan bestelling"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${inCart?"white":"#111"}" stroke-width="3" stroke-linecap="round">${inCart?'<polyline points="20 6 9 17 4 12"/>':'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'}</svg></button>`
           : `<button class="pIconBtn pIconBtnPrimary" data-add="${id}" title="Add"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`;
         const minRowHtml=isInkoopRole
-          ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span class="small">Min voorraad</span><input type="number" min="0" class="inkoopMinInput" data-ean="${esc(r.ean_code||"")}" value="${min||""}" placeholder="-"><button class="pIconBtn inkoopMinSave" type="button" title="Opslaan" data-ean="${esc(r.ean_code||"")}" style="width:36px;height:36px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></div>`
+          ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span class="small">Min voorraad</span><input type="number" min="0" class="inkoopMinInput" data-ean="${esc(r.ean_code||"")}" value="${min||""}" placeholder="-"><button class="pIconBtn inkoopMinSave" type="button" title="Opslaan" data-ean="${esc(r.ean_code||"")}" style="width:36px;height:36px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></div>${noLeverancierHtml(r,wh)}`
           : "";
         return`<div class="pCard" data-id="${id}"><div class="pRow" data-toggle="${id}"><div class="pName"><span class="stockDot ${dc}"></span>${esc(r.name||"")}${isLow?`<span class="lowBadge"></span>`:""}</div><div class="pActions"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5" style="flex-shrink:0;transition:transform .2s;${open?"transform:rotate(180deg)":""}"><polyline points="6 9 12 15 18 9"/></svg>${addBtnHtml}</div></div><div class="pDetails ${open?"open":""}" id="${id}">${minRowHtml}<div style="display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;"><div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px;">Surfcenter</div><div style="font-weight:700;font-size:18px;">${own}</div></div><div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px;">Warehouse</div><div style="font-weight:700;font-size:18px;">${wh}</div></div><div style="flex:1;padding:10px 12px;text-align:center;"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px;">Total</div><div style="font-weight:700;font-size:18px;">${tot}</div></div></div>${whD?`<div style="margin-bottom:10px;"><div class="whBreakdown">${whD}</div></div>`:""}<div class="kv" style="margin-bottom:8px;">${r.manufacturer?`<div class="k">Brand</div><div class="v">${esc(r.manufacturer)}</div>`:""}<div class="k">Category</div><div class="v">${esc(r._attribute_set||"-")}</div>${r.season?`<div class="k">Season</div><div class="v">${esc(r.season)}</div>`:""}<div class="k">EAN</div><div class="v">${esc(r.ean_code||"-")}</div></div></div></div>`;
       }).join("");
@@ -999,6 +999,48 @@
     let minStockMap={};
     try{ minStockMap=JSON.parse(localStorage.getItem("sc_minstock")||"{}"); }catch(e){}
 
+    // Leveranciers: contact info + mail template per supplier, maintained in the "Leveranciers" sheet tab.
+    // Falls back to the hardcoded WAREHOUSE_LABELS name if a leverancier row hasn't been filled in yet.
+    let leveranciersByKey={};
+    let brandToLeverancierKey={};
+
+    function populateLeverancierDropdown(){
+      inkoopCartSource.innerHTML=`<option value="">Kies een leverancier...</option>`+
+        WAREHOUSE_KEYS.map(k=>`<option value="${k}">${esc((leveranciersByKey[k]&&leveranciersByKey[k].naam)||WAREHOUSE_LABELS[k]||k)}</option>`).join("");
+    }
+
+    async function loadLeveranciers(){
+      try{
+        const res=await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=leveranciers&key=${encodeURIComponent(currentKey)}`);
+        if(!res||!res.ok||!Array.isArray(res.leveranciers))return;
+        leveranciersByKey={}; brandToLeverancierKey={};
+        res.leveranciers.forEach(l=>{
+          if(!l.key)return;
+          leveranciersByKey[l.key]=l;
+          String(l.merken||"").split(",").map(b=>b.trim().toLowerCase()).filter(Boolean).forEach(b=>{
+            brandToLeverancierKey[b]=l.key;
+          });
+        });
+        populateLeverancierDropdown();
+        renderProducts();
+      }catch(e){}
+    }
+
+    // For products with zero stock at every tracked warehouse: suggest a leverancier based on brand.
+    function suggestedLeverancierKey(r){
+      const brand=String(r.manufacturer||"").trim().toLowerCase();
+      return brand ? (brandToLeverancierKey[brand]||"") : "";
+    }
+    function leverancierLabel(key){
+      return (leveranciersByKey[key]&&leveranciersByKey[key].naam)||WAREHOUSE_LABELS[key]||key;
+    }
+    function noLeverancierHtml(r,wh){
+      if(!isInkoopRole||wh>0)return"";
+      const suggestion=suggestedLeverancierKey(r);
+      const text=suggestion?`Geen voorraad - vermoedelijk ${esc(leverancierLabel(suggestion))}`:"Geen leverancier gekoppeld";
+      return `<span class="small" style="display:block;color:var(--muted);">${text}</span>`;
+    }
+
     function setInkoopBadge(){
       const n=String(inkoopCart.length);
       inkoopCartBadge.textContent=n; inkoopCartBarBadge.textContent=n;
@@ -1041,22 +1083,35 @@
         setInkoopBadge(); renderInkoopCartList(); renderProducts();
       }));
     }
-    function openInkoopCart(){ renderInkoopCartList(); inkoopCartOverlay.classList.add("active"); }
+    function openInkoopCart(){ inkoopCartErr.textContent=""; renderInkoopCartList(); inkoopCartOverlay.classList.add("active"); }
     function closeInkoopCart(){ inkoopCartOverlay.classList.remove("active"); }
     inkoopCartBtn.onclick=openInkoopCart;
     inkoopCartBarBtn.onclick=openInkoopCart;
     inkoopCartClose.onclick=closeInkoopCart;
     inkoopCartOverlay.addEventListener("click",e=>{ if(e.target===inkoopCartOverlay)closeInkoopCart(); });
 
+    // {{contactpersoon}}, {{items}} and {{datum}} placeholders in a leverancier's own template get substituted.
+    function fillTemplate(tpl,vars){
+      return tpl.replace(/\{\{(\w+)\}\}/g,(m,k)=>Object.prototype.hasOwnProperty.call(vars,k)?vars[k]:m);
+    }
+
     inkoopCartSendBtn.onclick=()=>{
+      inkoopCartErr.textContent="";
       if(!inkoopCart.length) return;
       const src=inkoopCartSource.value;
-      const srcLabel=src?(WAREHOUSE_LABELS[src]||src):"Leverancier";
+      if(!src){ inkoopCartErr.textContent="Kies eerst een leverancier."; return; }
+      const lev=leveranciersByKey[src]||{};
+      const srcLabel=lev.naam||WAREHOUSE_LABELS[src]||src;
+      const contact=lev.contactpersoon||"";
       const date=new Date().toLocaleDateString("nl-NL",{day:"2-digit",month:"long",year:"numeric"});
       const subject=`Nabestelling Surf Center - ${srcLabel}`;
       const itemLines=inkoopCart.map(i=>`- ${i.name}\n  EAN: ${i.ean}`).join("\n\n");
-      const body=`Hallo,\n\nGraag willen wij de volgende producten nabestellen:\n\n${itemLines}\n\nKunnen jullie de beschikbaarheid, levertijd en prijzen bevestigen?\n\nMet vriendelijke groet,\nTeam Surf Center\n\nDatum: ${date}`;
-      window.location.href=`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      const vars={contactpersoon:contact,items:itemLines,datum:date};
+      const body=lev.template
+        ? fillTemplate(lev.template,vars)
+        : `Hallo${contact?" "+contact:""},\n\nGraag willen wij de volgende producten nabestellen:\n\n${itemLines}\n\nKunnen jullie de beschikbaarheid, levertijd en prijzen bevestigen?\n\nMet vriendelijke groet,\nTeam Surf Center\n\nDatum: ${date}`;
+      const to=lev.email?encodeURIComponent(lev.email):"";
+      window.location.href=`mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       inkoopCart=[]; setInkoopBadge(); renderProducts();
       closeInkoopCart();
     };
