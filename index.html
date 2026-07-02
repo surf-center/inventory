@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -238,19 +239,13 @@
     }
     @media(max-width:640px){ .cartBar{ display:block; } .cartFab{ display:none !important; } }
 
-    /* ---- Inkoop ---- */
-    .inkoopRow{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid #eee; }
-    .inkoopRow:last-child{ border-bottom:none; }
-    .inkoopName{ flex:1; font-size:14px; font-weight:500; min-width:0; word-break:break-word; line-height:1.3; }
-    .inkoopStock{ font-size:12px; color:var(--muted); white-space:nowrap; }
+    /* ---- Inkoop (inline row actions for role=inkoop) ---- */
     .inkoopMinInput{
       width:52px; padding:6px 8px; border-radius:10px; border:1px solid var(--border);
       font-family:'Poppins',sans-serif; font-size:13px; font-weight:500; text-align:center;
       outline:none; background:#fff;
     }
     .inkoopMinInput:focus{ border-color:#9ca3af; }
-    .inkoopList{ border:1px solid var(--border); border-radius:16px; overflow:hidden; }
-    .inkoopBottom{ position:sticky; bottom:0; background:rgba(252,252,252,.96); border-top:1px solid var(--border); padding:12px 14px; margin:12px -14px -14px; backdrop-filter:blur(10px); }
     .lowBadge{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--bad); margin-left:5px; vertical-align:middle; flex-shrink:0; }
 
     .toggleChip{
@@ -296,7 +291,6 @@
     <div class="topbar">
       <div></div>
       <div style="display:flex; gap:8px; align-items:center;">
-        <button id="inkoopBtn" class="btn" style="display:none;">Inkoop</button>
         <button id="accountBtn" class="btn">Account</button>
         <button id="logoutBtn" class="btn" title="Log out" style="padding:9px 11px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -313,6 +307,11 @@
       <div class="filterRow">
         <select id="filterCategory" class="filterSelect" disabled><option value="">All categories</option></select>
         <select id="filterSupplier" class="filterSelect" disabled><option value="">All brands</option></select>
+        <label class="toggleChip" id="mainOnlyLowWrap" style="display:none;">
+          <input type="checkbox" id="mainOnlyLow">
+          <span class="toggleDot"></span>
+          Onder min stock
+        </label>
         <button id="clearFiltersBtn" class="btn" style="flex-shrink:0; display:none; padding:10px 12px;">&#x2715;</button>
       </div>
       <div id="activeFilters" class="activeFilters"></div>
@@ -361,6 +360,20 @@
     </div>
   </div>
 
+  <!-- Desktop floating INKOOP order (role=inkoop only) -->
+  <div class="cartFab" id="inkoopCartBtn" style="display:none;">
+    <span>Bestelling versturen</span><span class="badge" id="inkoopCartBadge">0</span>
+  </div>
+
+  <!-- Mobile bottom INKOOP order bar -->
+  <div class="cartBar" id="inkoopCartBar" style="display:none;">
+    <div class="cartBarInner">
+      <button class="cartBarBtn" id="inkoopCartBarBtn">
+        Bestelling versturen <span class="badge" id="inkoopCartBarBadge">0</span>
+      </button>
+    </div>
+  </div>
+
   <!-- Lead modal -->
   <div id="cartOverlay" class="overlay">
     <div class="modal">
@@ -377,12 +390,35 @@
         </div>
         <div style="margin-top:14px; font-weight:700;">Items:</div>
         <div id="cartList" class="cartList"></div>
-        <button id="waBtn" style="width:100%; margin-top:12px; height:52px; border-radius:16px; background:#25D366; color:#fff; border:none; font-family:'Poppins',sans-serif; font-weight:700; font-size:16px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; appearance:none; -webkit-appearance:none;">
+        <button id="cartSaveBtn" class="btn btnPrimary" style="width:100%; margin-top:12px; height:52px; border-radius:16px; font-size:16px;">Opslaan</button>
+        <button id="waBtn" style="width:100%; margin-top:12px; height:52px; border-radius:16px; background:#25D366; color:#fff; border:none; font-family:'Poppins',sans-serif; font-weight:700; font-size:16px; display:none; align-items:center; justify-content:center; gap:10px; cursor:pointer; appearance:none; -webkit-appearance:none;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
           Send via WhatsApp
         </button>
         <div id="cartErr" class="err"></div>
         <div id="cartTick" class="tick" style="display:none;"><span class="dot">v</span><span> Saved</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inkoop order review modal (role=inkoop) -->
+  <div id="inkoopCartOverlay" class="overlay">
+    <div class="modal" style="width:min(560px,96vw);">
+      <div class="modalHeader">
+        <span>Bestelling</span>
+        <div class="actions"><button id="inkoopCartClose" class="btn">Sluiten</button></div>
+      </div>
+      <div class="modalBody">
+        <div class="field" style="margin-bottom:14px;">
+          <label>Leverancier</label>
+          <select id="inkoopCartSource" class="filterSelect" style="width:100%;"><option value="">Alle leveranciers</option></select>
+        </div>
+        <div style="font-weight:700; margin-bottom:8px;">Producten:</div>
+        <div id="inkoopCartList" class="cartList"></div>
+        <button id="inkoopCartSendBtn" style="width:100%; margin-top:14px; height:52px; border-radius:16px; background:var(--accent); color:#fff; border:none; font-family:'Poppins',sans-serif; font-weight:700; font-size:16px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; appearance:none; -webkit-appearance:none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+          Bestelling versturen
+        </button>
       </div>
     </div>
   </div>
@@ -418,39 +454,6 @@
     </div>
   </div>
 
-  <!-- Inkoop modal -->
-  <div id="inkoopOverlay" class="overlay">
-    <div class="modal" style="width:min(720px,96vw);">
-      <div class="modalHeader">
-        <span>Inkoop</span>
-        <div class="actions"><button id="inkoopClose" class="btn">Sluiten</button></div>
-      </div>
-      <div class="modalBody">
-        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;">
-          <input id="inkoopSearch" class="input" placeholder="Zoek product of EAN...">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <select id="inkoopSource" class="filterSelect" style="flex:1;min-width:160px;">
-              <option value="">Alle leveranciers</option>
-            </select>
-            <label class="toggleChip">
-              <input type="checkbox" id="inkoopOnlyLow">
-              <span class="toggleDot"></span>
-              Alleen onder min stock
-            </label>
-          </div>
-        </div>
-        <div id="inkoopMeta" style="font-size:13px;color:var(--muted);margin-bottom:8px;min-height:18px;"></div>
-        <div id="inkoopList" class="inkoopList"></div>
-        <div class="inkoopBottom">
-          <button id="inkoopOrderBtn" style="width:100%;height:50px;border-radius:16px;background:var(--accent);color:#fff;border:none;font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;appearance:none;-webkit-appearance:none;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
-            Mail bestelling <span id="inkoopOrderBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:#fff;color:#111;font-weight:700;font-size:13px;">0</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Calculator modal -->
   <div id="calcOverlay" class="overlay">
     <div class="modal">
@@ -465,7 +468,7 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwCyNxa099xK6Vh18EYu34iAuRJz-wx_fazIGxubtEqr720CevUqa4iGuodUrCQs8SHhQ/exec";
+    const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyr_mHxC2WhbEolmOoTzmrQm0j8uNUFRXrrDftB6CoRU6PyJEvmpnFyEsajhpXItS2r_g/exec";
     const CALCULATOR_URL = "https://surf-center.github.io/calculator/";
     const PAGE_SIZE = 20;
     const CACHE_KEY = "sc_products_cache";
@@ -550,29 +553,36 @@
     const cartBarBtn=document.getElementById("cartBarBtn"),cartBarBadge=document.getElementById("cartBarBadge");
     const cartOverlay=document.getElementById("cartOverlay"),cartClose=document.getElementById("cartClose");
     const cartListEl=document.getElementById("cartList"),cartErr=document.getElementById("cartErr"),cartTick=document.getElementById("cartTick");
-    const waBtn=document.getElementById("waBtn");
+    const waBtn=document.getElementById("waBtn"),cartSaveBtn=document.getElementById("cartSaveBtn");
     const custName=document.getElementById("custName"),phone=document.getElementById("phone"),mail=document.getElementById("mail"),note1=document.getElementById("note1");
     const accountOverlay=document.getElementById("accountOverlay"),accountClose=document.getElementById("accountClose");
     const accountTitle=document.getElementById("accountTitle"),accountSub=document.getElementById("accountSub");
     const accountOrdersTbody=document.getElementById("accountOrdersTbody"),accountErr=document.getElementById("accountErr"),mobileLeads=document.getElementById("mobileLeads");
     const calcOverlay=document.getElementById("calcOverlay"),calcClose=document.getElementById("calcClose"),calcFrame=document.getElementById("calcFrame");
-    const inkoopBtn=document.getElementById("inkoopBtn"),inkoopOverlay=document.getElementById("inkoopOverlay"),inkoopClose=document.getElementById("inkoopClose");
-    const inkoopSearch=document.getElementById("inkoopSearch"),inkoopSource=document.getElementById("inkoopSource"),inkoopOnlyLow=document.getElementById("inkoopOnlyLow");
-    const inkoopList=document.getElementById("inkoopList"),inkoopMeta=document.getElementById("inkoopMeta");
-    const inkoopOrderBtn=document.getElementById("inkoopOrderBtn"),inkoopOrderBadge=document.getElementById("inkoopOrderBadge");
+    const mainOnlyLowWrap=document.getElementById("mainOnlyLowWrap"),mainOnlyLow=document.getElementById("mainOnlyLow");
+    const inkoopCartOverlay=document.getElementById("inkoopCartOverlay"),inkoopCartClose=document.getElementById("inkoopCartClose");
+    const inkoopCartSource=document.getElementById("inkoopCartSource"),inkoopCartList=document.getElementById("inkoopCartList"),inkoopCartSendBtn=document.getElementById("inkoopCartSendBtn");
+    const inkoopCartBtn=document.getElementById("inkoopCartBtn"),inkoopCartBadge=document.getElementById("inkoopCartBadge");
+    const inkoopCartBar=document.getElementById("inkoopCartBar"),inkoopCartBarBtn=document.getElementById("inkoopCartBarBtn"),inkoopCartBarBadge=document.getElementById("inkoopCartBarBadge");
 
-    let currentKey="",currentUserName="",currentUserRole="",isAdmin=false;
+    let currentKey="",currentUserName="",currentUserRole="",isAdmin=false,isInkoopRole=false;
     let allRows=[],expanded=new Set(),mobileExpanded=new Set(),cart=[];
     let visibleCount=PAGE_SIZE;
 
     // ---- Filters ----
-    function getFilters(){ return { q:searchInput.value.trim().toLowerCase(), category:filterCategory.value, supplier:filterSupplier.value }; }
+    function getFilters(){
+      return {
+        q:searchInput.value.trim().toLowerCase(), category:filterCategory.value, supplier:filterSupplier.value,
+        onlyLow: isInkoopRole ? mainOnlyLow.checked : false
+      };
+    }
     function filtersActive(){ const f=getFilters(); return f.q||f.category||f.supplier; }
 
     function matchesFilters(r,f){
       if(f.q){ const tokens=f.q.split(/\s+/).filter(Boolean); const hay=((r.name||"")+" "+(r.ean_code||"")).toLowerCase(); if(!tokens.every(t=>hay.includes(t)))return false; }
       if(f.category&&(r._attribute_set||"")!==f.category)return false;
       if(f.supplier&&(r.manufacturer||"")!==f.supplier)return false;
+      if(f.onlyLow){ const min=minStockMap[r.ean_code]||0; if(min<=0||ownStock(r)>=min)return false; }
       return true;
     }
 
@@ -609,6 +619,7 @@
     searchInput.addEventListener("input",()=>onFilterChange(true));
     filterCategory.addEventListener("change",()=>onFilterChange(true));
     filterSupplier.addEventListener("change",()=>onFilterChange(true));
+    mainOnlyLow.addEventListener("change",()=>onFilterChange(true));
     clearFiltersBtn.onclick=()=>{ searchInput.value=""; filterCategory.value=""; filterSupplier.value=""; onFilterChange(true); };
 
     // ---- Cart ----
@@ -622,7 +633,7 @@
     }
 
     // ---- Auth ----
-    function showLogin(){ loginView.style.display="block"; appView.style.display="none"; cartBtn.style.display="none"; cartBar.style.display="none"; inkoopBtn.style.display="none"; loginErr.textContent=""; loginKey.value=""; loginKey.focus(); }
+    function showLogin(){ loginView.style.display="block"; appView.style.display="none"; cartBtn.style.display="none"; cartBar.style.display="none"; inkoopCartBtn.style.display="none"; inkoopCartBar.style.display="none"; mainOnlyLowWrap.style.display="none"; loginErr.textContent=""; loginKey.value=""; loginKey.focus(); }
     function showApp(){ loginView.style.display="none"; appView.style.display="block"; cartBtn.style.display=""; cartBar.style.display=""; searchInput.disabled=false; filterCategory.disabled=false; filterSupplier.disabled=false; }
     function logout(){ localStorage.removeItem("employeeKey"); currentKey=""; showLogin(); }
     logoutBtn.onclick=logout;
@@ -632,38 +643,47 @@
     function saveLeadForm(){ localStorage.setItem(LEAD_CACHE,JSON.stringify({name:custName.value,phone:phone.value,mail:mail.value,note:note1.value})); }
     function restoreLeadForm(){ try{ const d=JSON.parse(localStorage.getItem(LEAD_CACHE)||"{}"); if(d.name)custName.value=d.name; if(d.phone)phone.value=d.phone; if(d.mail)mail.value=d.mail; if(d.note)note1.value=d.note; }catch(e){} }
 
-    let _autoSaveTimer=null;
-    function scheduleAutoSave(){
-      saveLeadForm();
-      clearTimeout(_autoSaveTimer);
-      const name=custName.value.trim(),p=phone.value.trim(),m=mail.value.trim(),n1=note1.value.trim();
-      if(!name||((!p)&&(!m))||!cart.length) return;
-      _autoSaveTimer=setTimeout(async()=>{
-        try{
-          const payload={name,phoneNumber:p,mail:m,note1:n1,items:cart};
-          const url=`${APPS_SCRIPT_WEBAPP_URL}?action=submitLead&key=${encodeURIComponent(currentKey)}&payload=${encodeURIComponent(JSON.stringify(payload))}`;
-          await jsonp(url);
-        }catch(e){}
-      },3000);
+    // No more silent autosave-to-sheet while typing: the customer lead is only written
+    // to the sheet once the user explicitly clicks "Opslaan". Local draft persistence
+    // (saveLeadForm/restoreLeadForm) is unrelated and still runs on every keystroke.
+    function resetCartSaveState(){
+      waBtn.style.display="none";
+      cartTick.style.display="none";
+      cartSaveBtn.style.display="";
+      cartSaveBtn.disabled=false; cartSaveBtn.textContent="Opslaan";
     }
-    [custName,phone,mail,note1].forEach(el=>el.addEventListener("input",scheduleAutoSave));
+    [custName,phone,mail,note1].forEach(el=>el.addEventListener("input",()=>{
+      saveLeadForm();
+      if(waBtn.style.display!=="none") resetCartSaveState(); // edited after saving: must save again
+    }));
 
-    function openCart(){ cartErr.textContent=""; cartTick.style.display="none"; restoreLeadForm(); renderCart(); cartOverlay.classList.add("active"); }
+    function openCart(){ cartErr.textContent=""; resetCartSaveState(); restoreLeadForm(); renderCart(); cartOverlay.classList.add("active"); }
     function closeCart(){ cartOverlay.classList.remove("active"); }
     cartBtn.onclick=openCart; cartBarBtn.onclick=openCart; cartClose.onclick=closeCart;
     cartOverlay.addEventListener("click",e=>{ if(e.target===cartOverlay)closeCart(); });
 
-    waBtn.onclick=async()=>{
+    cartSaveBtn.onclick=async()=>{
       const name=custName.value.trim(),p=phone.value.trim(),m=mail.value.trim(),n1=note1.value.trim();
       if(!name){cartErr.textContent="Name is required.";return;}
       if(!p&&!m){cartErr.textContent="Phone number or email is required.";return;}
       if(!cart.length){cartErr.textContent="No items added.";return;}
       cartErr.textContent="";
-      // Save to spreadsheet
-      const payload={name,phoneNumber:p,mail:m,note1:n1,items:cart};
-      const url2=`${APPS_SCRIPT_WEBAPP_URL}?action=submitLead&key=${encodeURIComponent(currentKey)}&payload=${encodeURIComponent(JSON.stringify(payload))}`;
-      try{ await jsonp(url2); }catch(e){}
-      // Open WhatsApp
+      cartSaveBtn.disabled=true; cartSaveBtn.textContent="Opslaan...";
+      try{
+        const payload={name,phoneNumber:p,mail:m,note1:n1,items:cart};
+        const url=`${APPS_SCRIPT_WEBAPP_URL}?action=submitLead&key=${encodeURIComponent(currentKey)}&payload=${encodeURIComponent(JSON.stringify(payload))}`;
+        await jsonp(url);
+        cartSaveBtn.style.display="none";
+        cartTick.style.display="";
+        waBtn.style.display="flex";
+      }catch(e){
+        cartErr.textContent="Opslaan mislukt, probeer opnieuw.";
+        cartSaveBtn.disabled=false; cartSaveBtn.textContent="Opslaan";
+      }
+    };
+
+    waBtn.onclick=()=>{
+      const name=custName.value.trim(),p=phone.value.trim(),m=mail.value.trim(),n1=note1.value.trim();
       let msg="*New lead - Surf Center*\n\n";
       if(name) msg+=`*Name:* ${name}\n`;
       if(p)    msg+=`*Phone:* ${p}\n`;
@@ -719,12 +739,18 @@
       currentUserName=(res.user&&res.user.name)?res.user.name:"";
       currentUserRole=(res.user&&res.user.role)?String(res.user.role).trim().toLowerCase():"";
       accountBtn.textContent=currentUserName||"Account";
-      // "inkoop" role: purchasing staff get the Inkoop (supplier order) view instead of the customer-lead cart.
-      // "sales" role (or any other/blank role): customer-lead cart, no Inkoop access.
-      const isInkoopRole=currentUserRole==="inkoop";
-      inkoopBtn.style.display=isInkoopRole?"":"none";
+      // "inkoop" role: purchasing staff get inline min-stock/order actions on the main list instead of the customer-lead cart.
+      // "sales" role (or any other/blank role): customer-lead cart, normal Info/%/Add actions.
+      isInkoopRole=currentUserRole==="inkoop";
       cartBtn.style.display=isInkoopRole?"none":"";
       cartBar.style.display=isInkoopRole?"none":"";
+      inkoopCartBtn.style.display=isInkoopRole?"":"none";
+      inkoopCartBar.style.display=isInkoopRole?"":"none";
+      mainOnlyLowWrap.style.display=isInkoopRole?"":"none";
+      if(isInkoopRole && inkoopCartSource.options.length<=1){
+        inkoopCartSource.innerHTML=`<option value="">Alle leveranciers</option>`+
+          WAREHOUSE_KEYS.map(k=>`<option value="${k}">${WAREHOUSE_LABELS[k]||k}</option>`).join("");
+      }
       const isPartial=!!(opts&&opts.partial);
       if(isInkoopRole && !isPartial) loadMinStock();
       allRows=Array.isArray(res.rows)?res.rows:[];
@@ -811,11 +837,41 @@
         rows.forEach((r,i)=>{
           const id=`${r.ean_code}__${i}`,own=ownStock(r),wh=warehouseStock(r),tot=own+wh,dc=dotClass(stockStatus(r));
           const tr=document.createElement("tr");
-          const tdP=document.createElement("td"); tdP.innerHTML=`<span class="stockDot ${dc}"></span>${esc(r.name||"")}`;
+          const min=minStockMap[r.ean_code]||0, isLow=isInkoopRole&&min>0&&own<min;
+          const tdP=document.createElement("td"); tdP.innerHTML=`<span class="stockDot ${dc}"></span>${esc(r.name||"")}${isLow?`<span class="lowBadge"></span>`:""}`;
           tr.appendChild(tdP);
           [String(own),String(wh),String(tot)].forEach(v=>tr.appendChild(Object.assign(document.createElement("td"),{textContent:v})));
           const tdA=document.createElement("td"); tdA.className="tdActions";
           const wrap=document.createElement("div"); wrap.className="actionWrap";
+
+          if(isInkoopRole){
+            const inCart=inkoopCart.some(x=>x.ean===r.ean_code);
+            const minInput=document.createElement("input");
+            minInput.type="number"; minInput.min="0"; minInput.className="inkoopMinInput";
+            minInput.value=min||""; minInput.placeholder="-";
+            minInput.addEventListener("change",()=>{
+              updateMinStock(r.ean_code,parseInt(minInput.value)||0);
+              if(mainOnlyLow.checked)renderProducts();
+            });
+            const saveBtn=document.createElement("button");
+            saveBtn.type="button"; saveBtn.className="pIconBtn"; saveBtn.title="Opslaan";
+            saveBtn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+            saveBtn.onclick=()=>saveMinStockNow(r.ean_code,parseInt(minInput.value)||0,saveBtn);
+            const addBtn=document.createElement("button");
+            addBtn.type="button"; addBtn.className="pIconBtn"+(inCart?" pIconBtnPrimary":"");
+            addBtn.innerHTML=inCart
+              ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
+              : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+            addBtn.onclick=()=>{
+              if(inkoopCart.some(x=>x.ean===r.ean_code)) inkoopCart=inkoopCart.filter(x=>x.ean!==r.ean_code);
+              else inkoopCart.push({ean:r.ean_code,name:r.name});
+              setInkoopBadge(); renderProducts();
+            };
+            wrap.appendChild(minInput); wrap.appendChild(saveBtn); wrap.appendChild(addBtn);
+            tdA.appendChild(wrap); tr.appendChild(tdA); tbody.appendChild(tr);
+            return;
+          }
+
           const iBtn=document.createElement("button"); iBtn.className="btn"; iBtn.textContent=expanded.has(id)?"Close":"Info";
           iBtn.onclick=()=>{
             if(expanded.has(id)){
@@ -862,7 +918,15 @@
         const own=ownStock(r),wh=warehouseStock(r),tot=own+wh,dc=dotClass(stockStatus(r));
         const bd=warehouseBreakdown(r);
         const whD=bd.map(x=>`<div class="whLine">${esc(x.label)}: ${x.qty}</div>`).join("");
-        return`<div class="pCard" data-id="${id}"><div class="pRow" data-toggle="${id}"><div class="pName"><span class="stockDot ${dc}"></span>${esc(r.name||"")}</div><div class="pActions"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5" style="flex-shrink:0;transition:transform .2s;${open?"transform:rotate(180deg)":""}"><polyline points="6 9 12 15 18 9"/></svg><button class="pIconBtn pIconBtnPrimary" data-add="${id}" title="Add"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div></div><div class="pDetails ${open?"open":""}" id="${id}"><div style="display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;"><div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px;">Surfcenter</div><div style="font-weight:700;font-size:18px;">${own}</div></div><div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px;">Warehouse</div><div style="font-weight:700;font-size:18px;">${wh}</div></div><div style="flex:1;padding:10px 12px;text-align:center;"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px;">Total</div><div style="font-weight:700;font-size:18px;">${tot}</div></div></div>${whD?`<div style="margin-bottom:10px;"><div class="whBreakdown">${whD}</div></div>`:""}<div class="kv" style="margin-bottom:8px;">${r.manufacturer?`<div class="k">Brand</div><div class="v">${esc(r.manufacturer)}</div>`:""}<div class="k">Category</div><div class="v">${esc(r._attribute_set||"-")}</div>${r.season?`<div class="k">Season</div><div class="v">${esc(r.season)}</div>`:""}<div class="k">EAN</div><div class="v">${esc(r.ean_code||"-")}</div></div></div></div>`;
+        const min=minStockMap[r.ean_code]||0, isLow=isInkoopRole&&min>0&&own<min;
+        const inCart=inkoopCart.some(x=>x.ean===r.ean_code);
+        const addBtnHtml=isInkoopRole
+          ? `<button class="pIconBtn${inCart?" pIconBtnPrimary":""}" data-add="${id}" title="Toevoegen aan bestelling"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${inCart?"white":"#111"}" stroke-width="3" stroke-linecap="round">${inCart?'<polyline points="20 6 9 17 4 12"/>':'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'}</svg></button>`
+          : `<button class="pIconBtn pIconBtnPrimary" data-add="${id}" title="Add"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`;
+        const minRowHtml=isInkoopRole
+          ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span class="small">Min voorraad</span><input type="number" min="0" class="inkoopMinInput" data-ean="${esc(r.ean_code||"")}" value="${min||""}" placeholder="-"><button class="pIconBtn inkoopMinSave" type="button" title="Opslaan" data-ean="${esc(r.ean_code||"")}" style="width:36px;height:36px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></div>`
+          : "";
+        return`<div class="pCard" data-id="${id}"><div class="pRow" data-toggle="${id}"><div class="pName"><span class="stockDot ${dc}"></span>${esc(r.name||"")}${isLow?`<span class="lowBadge"></span>`:""}</div><div class="pActions"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5" style="flex-shrink:0;transition:transform .2s;${open?"transform:rotate(180deg)":""}"><polyline points="6 9 12 15 18 9"/></svg>${addBtnHtml}</div></div><div class="pDetails ${open?"open":""}" id="${id}">${minRowHtml}<div style="display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;"><div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px;">Surfcenter</div><div style="font-weight:700;font-size:18px;">${own}</div></div><div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px;">Warehouse</div><div style="font-weight:700;font-size:18px;">${wh}</div></div><div style="flex:1;padding:10px 12px;text-align:center;"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px;">Total</div><div style="font-weight:700;font-size:18px;">${tot}</div></div></div>${whD?`<div style="margin-bottom:10px;"><div class="whBreakdown">${whD}</div></div>`:""}<div class="kv" style="margin-bottom:8px;">${r.manufacturer?`<div class="k">Brand</div><div class="v">${esc(r.manufacturer)}</div>`:""}<div class="k">Category</div><div class="v">${esc(r._attribute_set||"-")}</div>${r.season?`<div class="k">Season</div><div class="v">${esc(r.season)}</div>`:""}<div class="k">EAN</div><div class="v">${esc(r.ean_code||"-")}</div></div></div></div>`;
       }).join("");
 
       if(total>visibleCount){
@@ -888,13 +952,36 @@
       mobileProducts.querySelectorAll("button[data-add]").forEach(btn=>btn.addEventListener("click",()=>{
         const parent=btn.closest(".pCard"); const pid=parent.getAttribute("data-id");
         const idx=rows.findIndex((_,i)=>`m_${rows[i].ean_code}__${i}`===pid);
-        const r=rows[idx]; if(r)addToCart({ean:r.ean_code,name:r.name,retailPrice:r.retailPrice});
+        const r=rows[idx]; if(!r)return;
+        if(isInkoopRole){
+          if(inkoopCart.some(x=>x.ean===r.ean_code)) inkoopCart=inkoopCart.filter(x=>x.ean!==r.ean_code);
+          else inkoopCart.push({ean:r.ean_code,name:r.name});
+          setInkoopBadge(); renderProducts();
+        } else {
+          addToCart({ean:r.ean_code,name:r.name,retailPrice:r.retailPrice});
+        }
       }));
       mobileProducts.querySelectorAll("button[data-calc]").forEach(btn=>btn.addEventListener("click",()=>{
         const parent=btn.closest(".pCard"); const pid=parent.getAttribute("data-id");
         const idx=rows.findIndex((_,i)=>`m_${rows[i].ean_code}__${i}`===pid);
         const r=rows[idx]; if(r)openCalculatorForRow(r);
       }));
+      if(isInkoopRole){
+        mobileProducts.querySelectorAll(".inkoopMinInput").forEach(inp=>{
+          inp.addEventListener("change",()=>{
+            updateMinStock(inp.getAttribute("data-ean"),parseInt(inp.value)||0);
+            if(mainOnlyLow.checked)renderProducts();
+          });
+        });
+        mobileProducts.querySelectorAll(".inkoopMinSave").forEach(btn=>{
+          btn.addEventListener("click",()=>{
+            const ean=btn.getAttribute("data-ean");
+            const wrap=btn.closest("div");
+            const inp=wrap&&wrap.querySelector(".inkoopMinInput");
+            saveMinStockNow(ean,parseInt(inp&&inp.value)||0,btn);
+          });
+        });
+      }
     }
 
     // ---- MinStock loader (separate call, admin only) ----
@@ -913,26 +1000,10 @@
     let minStockMap={};
     try{ minStockMap=JSON.parse(localStorage.getItem("sc_minstock")||"{}"); }catch(e){}
 
-    function setInkoopBadge(){ inkoopOrderBadge.textContent=String(inkoopCart.length); }
-
-    function openInkoop(){
-      inkoopCart=[]; setInkoopBadge();
-      inkoopSearch.value=""; inkoopOnlyLow.checked=false;
-      inkoopSource.innerHTML=`<option value="">Alle leveranciers</option>`+
-        WAREHOUSE_KEYS.map(k=>`<option value="${k}">${WAREHOUSE_LABELS[k]||k}</option>`).join("");
-      renderInkoop();
-      inkoopOverlay.classList.add("active");
+    function setInkoopBadge(){
+      const n=String(inkoopCart.length);
+      inkoopCartBadge.textContent=n; inkoopCartBarBadge.textContent=n;
     }
-    function closeInkoop(){ inkoopOverlay.classList.remove("active"); }
-    inkoopBtn.onclick=openInkoop;
-    inkoopClose.onclick=closeInkoop;
-    inkoopOverlay.addEventListener("click",e=>{ if(e.target===inkoopOverlay)closeInkoop(); });
-
-    let _inkoopTimer=null;
-    function onInkoopFilter(){ clearTimeout(_inkoopTimer); _inkoopTimer=setTimeout(renderInkoop,150); }
-    inkoopSearch.addEventListener("input",onInkoopFilter);
-    inkoopSource.addEventListener("change",onInkoopFilter);
-    inkoopOnlyLow.addEventListener("change",onInkoopFilter);
 
     const _minSaveTimers={};
     function updateMinStock(ean,qty){
@@ -962,84 +1033,33 @@
         .catch(()=>{ if(btn){ btn.disabled=false; btn.title="Opslaan mislukt, probeer opnieuw"; } });
     }
 
-    function renderInkoop(){
-      const q=inkoopSearch.value.trim().toLowerCase();
-      const src=inkoopSource.value;
-      const onlyLow=inkoopOnlyLow.checked;
-
-      const rows=allRows.filter(r=>{
-        if(q){ const hay=((r.name||"")+" "+(r.ean_code||"")).toLowerCase(); if(!q.split(/\s+/).every(t=>hay.includes(t)))return false; }
-        if(src&&(toNum(r[src])||0)<=0)return false;
-        if(onlyLow){ const min=minStockMap[r.ean_code]||0; if(min<=0||ownStock(r)>=min)return false; }
-        return true;
-      });
-
-      inkoopMeta.textContent=`${rows.length} product${rows.length!==1?"en":""}`;
-
-      if(!rows.length){
-        inkoopList.innerHTML=`<div class="inkoopRow"><div class="inkoopName" style="color:var(--muted);">Geen resultaten.</div></div>`;
-        return;
-      }
-
-      inkoopList.innerHTML=rows.slice(0,60).map(r=>{
-        const own=ownStock(r);
-        const srcQty=src?(toNum(r[src])||0):warehouseStock(r);
-        const min=minStockMap[r.ean_code]||0;
-        const isLow=min>0&&own<min;
-        const inCart=inkoopCart.some(x=>x.ean===r.ean_code);
-        const dc=dotClass(own>0?"green":srcQty>0?"orange":"red");
-        return`<div class="inkoopRow">
-          <span class="stockDot ${dc}"></span>
-          <div class="inkoopName">${esc(r.name||"")}${isLow?`<span class="lowBadge"></span>`:""}</div>
-          <div class="inkoopStock">SC:${own}${src?" / "+srcQty:""}</div>
-          <div style="display:flex;align-items:center;gap:3px;font-size:12px;color:var(--muted);flex-shrink:0;">min<input class="inkoopMinInput" type="number" min="0" value="${min||""}" placeholder="-" data-ean="${esc(r.ean_code||"")}">
-            <button class="pIconBtn inkoopMinSave" type="button" title="Opslaan" data-ean="${esc(r.ean_code||"")}" style="width:28px;height:28px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </button>
-          </div>
-          <button class="pIconBtn${inCart?" pIconBtnPrimary":""}" data-add-inkoop="${esc(r.ean_code||"")}">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${inCart?"white":"#111"}" stroke-width="3" stroke-linecap="round">
-              ${inCart?`<polyline points="20 6 9 17 4 12"/>`:`<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>`}
-            </svg>
-          </button>
-        </div>`;
-      }).join("");
-
-      inkoopList.querySelectorAll(".inkoopMinInput").forEach(inp=>{
-        inp.addEventListener("change",()=>{
-          updateMinStock(inp.getAttribute("data-ean"),parseInt(inp.value)||0);
-          if(inkoopOnlyLow.checked)renderInkoop();
-        });
-      });
-      inkoopList.querySelectorAll(".inkoopMinSave").forEach(btn=>{
-        btn.addEventListener("click",()=>{
-          const ean=btn.getAttribute("data-ean");
-          const row=btn.closest(".inkoopRow");
-          const inp=row&&row.querySelector(".inkoopMinInput");
-          saveMinStockNow(ean,parseInt(inp&&inp.value)||0,btn);
-        });
-      });
-      inkoopList.querySelectorAll("[data-add-inkoop]").forEach(btn=>{
-        btn.addEventListener("click",()=>{
-          const ean=btn.getAttribute("data-add-inkoop");
-          const r=allRows.find(x=>x.ean_code===ean);
-          if(!r)return;
-          if(inkoopCart.some(x=>x.ean===ean)) inkoopCart=inkoopCart.filter(x=>x.ean!==ean);
-          else inkoopCart.push({ean:r.ean_code,name:r.name});
-          setInkoopBadge(); renderInkoop();
-        });
-      });
+    function renderInkoopCartList(){
+      if(!inkoopCart.length){ inkoopCartList.innerHTML=`<div class="cartRow"><div class="small">No items.</div></div>`; return; }
+      inkoopCartList.innerHTML=inkoopCart.map(it=>`<div class="cartRow"><div class="left"><div style="font-weight:500;">${esc(it.name||"")}</div></div><div><button class="btn" data-remove-inkoop="${esc(it.ean)}">Remove</button></div></div>`).join("");
+      inkoopCartList.querySelectorAll("[data-remove-inkoop]").forEach(b=>b.addEventListener("click",()=>{
+        const ean=b.getAttribute("data-remove-inkoop");
+        inkoopCart=inkoopCart.filter(x=>x.ean!==ean);
+        setInkoopBadge(); renderInkoopCartList(); renderProducts();
+      }));
     }
+    function openInkoopCart(){ renderInkoopCartList(); inkoopCartOverlay.classList.add("active"); }
+    function closeInkoopCart(){ inkoopCartOverlay.classList.remove("active"); }
+    inkoopCartBtn.onclick=openInkoopCart;
+    inkoopCartBarBtn.onclick=openInkoopCart;
+    inkoopCartClose.onclick=closeInkoopCart;
+    inkoopCartOverlay.addEventListener("click",e=>{ if(e.target===inkoopCartOverlay)closeInkoopCart(); });
 
-    inkoopOrderBtn.onclick=()=>{
-      if(!inkoopCart.length){ return; }
-      const src=inkoopSource.value;
+    inkoopCartSendBtn.onclick=()=>{
+      if(!inkoopCart.length) return;
+      const src=inkoopCartSource.value;
       const srcLabel=src?(WAREHOUSE_LABELS[src]||src):"Leverancier";
       const date=new Date().toLocaleDateString("nl-NL",{day:"2-digit",month:"long",year:"numeric"});
       const subject=`Nabestelling Surf Center - ${srcLabel}`;
       const itemLines=inkoopCart.map(i=>`- ${i.name}\n  EAN: ${i.ean}`).join("\n\n");
       const body=`Hallo,\n\nGraag willen wij de volgende producten nabestellen:\n\n${itemLines}\n\nKunnen jullie de beschikbaarheid, levertijd en prijzen bevestigen?\n\nMet vriendelijke groet,\nTeam Surf Center\n\nDatum: ${date}`;
       window.location.href=`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      inkoopCart=[]; setInkoopBadge(); renderProducts();
+      closeInkoopCart();
     };
 
     // ---- Login ----
@@ -1110,3 +1130,4 @@
   </script>
 </body>
 </html>
+```
