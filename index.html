@@ -31,7 +31,7 @@
     .wrap{ max-width:1300px; margin:0 auto; padding:16px 18px 120px; }
     @media(max-width:480px){ .centerWrap{ padding:20px 14px 16px; } .wrap{ padding:10px 12px 110px; } }
     /* Same viewport-spoofing concern as elsewhere: don't let a wide reported viewport
-       shrink the login card into a tiny centered box — it should fill almost the whole
+       shrink the login card into a tiny centered box ‚Äî it should fill almost the whole
        phone width regardless of what the browser claims its viewport is. */
     html.mobileMode .centerWrap{ max-width:100%; padding:20px 14px 16px; }
 
@@ -79,6 +79,13 @@
     .loginCard{ background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:16px; text-align:left; }
 
     .topbar{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:6px 0 10px; }
+    .syncWrap{ display:flex; align-items:center; gap:8px; min-width:0; }
+    .syncInfo{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #refreshBtn{ padding:9px 11px; }
+    #refreshBtn svg{ display:block; }
+    #refreshBtn:disabled{ cursor:default; opacity:.6; }
+    #refreshBtn.spinning svg{ animation:spin 1s linear infinite; }
+    @keyframes spin{ to{ transform:rotate(360deg); } }
 
     .searchArea{ display:flex; flex-direction:column; gap:8px; margin:6px 0 12px; }
     .searchRow{ display:flex; gap:8px; align-items:center; }
@@ -87,13 +94,13 @@
     .filterRow .filterSelect{ flex:1; min-width:120px; }
 
     /* Keyed off the JS-driven html.mobileMode class rather than a raw @media(max-width)
-       query — a spoofed/"desktop site" viewport must not defeat the mobile layout. */
+       query ‚Äî a spoofed/"desktop site" viewport must not defeat the mobile layout. */
     html.mobileMode .mobileSearchBar{
       position:sticky; top:0; z-index:100;
       background:rgba(252,252,252,.97); backdrop-filter:blur(10px);
       padding:12px 12px 10px; margin:0 -12px 10px;
     }
-    /* Mobile: the search bar should dominate — big, unmissable target for a thumb.
+    /* Mobile: the search bar should dominate ‚Äî big, unmissable target for a thumb.
        Everything else (category/brand/leverancier/toggles) is tucked behind "Filters"
        below it so it doesn't compete for attention. */
     html.mobileMode #searchInput{
@@ -142,13 +149,13 @@
     .productList{ display:flex; flex-direction:column; gap:10px; }
     .pCard{ border:1px solid var(--border); border-radius:18px; background:#fff; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.04); }
     .pRow{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:16px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-    /* No secondary stats line — the colored dot alone (green/orange/red) is the at-a-glance
+    /* No secondary stats line ‚Äî the colored dot alone (green/orange/red) is the at-a-glance
        stock signal; tap the row for exact numbers. Keeps the list scannable. */
     .pName{ font-weight:500; font-size:22px; line-height:1.3; flex:1; min-width:0; word-break:break-word; display:flex; align-items:center; }
     .pActions{ display:flex; gap:10px; align-items:center; flex-shrink:0; }
-    /* Bigger tap targets specifically on mobile — the shared .pIconBtn size (36px) stays
+    /* Bigger tap targets specifically on mobile ‚Äî the shared .pIconBtn size (36px) stays
        as-is for desktop inkoop rows so this doesn't blow up that layout. */
-    /* The add button is the single most-used action on this list — make it the biggest,
+    /* The add button is the single most-used action on this list ‚Äî make it the biggest,
        most obvious tap target on the row. */
     html.mobileMode .pIconBtn{ width:60px; height:60px; border-radius:18px; }
     html.mobileMode .pIconBtn svg{ width:26px; height:26px; }
@@ -245,18 +252,24 @@
     .cartGroup .cartList .cartRow:last-child{ border-bottom:none; }
     .cartRow .left{ display:flex; flex-direction:column; gap:3px; }
 
-    .tick{
-      display:inline-flex; align-items:center; gap:8px; padding:10px 12px;
-      border:1px solid rgba(15,123,47,.25); background:rgba(15,123,47,.06);
-      border-radius:14px; color:var(--ok); font-weight:500; margin-top:12px;
+    /* Send-lead buttons shown after "Opslaan": WhatsApp (green) or mail draft (dark). */
+    .leadSendBtn{
+      width:100%; margin-top:12px; height:52px; border-radius:16px; color:#fff; border:none;
+      font-family:'Poppins',sans-serif; font-weight:700; font-size:16px;
+      display:none; align-items:center; justify-content:center; gap:10px;
+      cursor:pointer; appearance:none; -webkit-appearance:none;
     }
-    .tick .dot{
-      width:22px; height:22px; border-radius:50%; display:inline-flex;
-      align-items:center; justify-content:center; background:var(--ok); color:#fff; font-weight:700;
+    #waBtn{ background:#25D366; }
+    #mailBtn{ background:var(--accent); }
+
+    /* "Opslaan" turns into a green "‚úì Opgeslagen" in place once the lead is in the sheet. */
+    .btnSaved,.btnSaved:hover{
+      background:var(--ok); border-color:var(--ok); color:#fff; opacity:1; cursor:default;
+      display:flex; align-items:center; justify-content:center; gap:8px;
     }
 
     .cartFab{
-      position:fixed; left:18px; bottom:18px; height:56px; padding:0 16px; border-radius:999px;
+      position:fixed; left:18px; bottom:18px; height:56px; padding:0 16px; border-radius:14px;
       background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; gap:10px;
       cursor:pointer; box-shadow:0 10px 25px rgba(0,0,0,.25); z-index:9999; user-select:none;
       font-family:'Poppins',sans-serif; font-weight:700;
@@ -287,9 +300,9 @@
     }
     html.mobileMode .cartBar{ display:block; }
     html.mobileMode .cartFab{ display:none !important; }
-    /* Big, unmissable thumb target at the bottom — this is the other half of "focus on
+    /* Big, unmissable thumb target at the bottom ‚Äî this is the other half of "focus on
        search, worry about the rest less" for mobile. */
-    html.mobileMode .cartBarBtn{ height:76px; font-size:26px; font-weight:800; letter-spacing:.2px; border-radius:22px; }
+    html.mobileMode .cartBarBtn{ height:76px; font-size:26px; font-weight:800; letter-spacing:.2px; border-radius:14px; }
     html.mobileMode .cartBarBtn .badge{ min-width:34px; height:34px; font-size:16px; }
 
     /* ---- Inkoop (inline row actions for role=inkoop) ---- */
@@ -344,7 +357,12 @@
   <!-- APP -->
   <div id="appView" class="wrap">
     <div class="topbar">
-      <div></div>
+      <div class="syncWrap">
+        <button id="refreshBtn" class="btn" title="Producten vernieuwen" aria-label="Producten vernieuwen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </button>
+        <span id="syncInfo" class="syncInfo"></span>
+      </div>
       <div style="display:flex; gap:8px; align-items:center;">
         <button id="accountBtn" class="btn">Account</button>
         <button id="logoutBtn" class="btn" title="Log out" style="padding:9px 11px;">
@@ -462,12 +480,15 @@
         <div style="margin-top:14px; font-weight:700;">Items:</div>
         <div id="cartList" class="cartList"></div>
         <button id="cartSaveBtn" class="btn btnPrimary" style="width:100%; margin-top:12px; height:52px; border-radius:16px; font-size:16px;">Opslaan</button>
-        <button id="waBtn" style="width:100%; margin-top:12px; height:52px; border-radius:16px; background:#25D366; color:#fff; border:none; font-family:'Poppins',sans-serif; font-weight:700; font-size:16px; display:none; align-items:center; justify-content:center; gap:10px; cursor:pointer; appearance:none; -webkit-appearance:none;">
+        <button id="waBtn" class="leadSendBtn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
           Send via WhatsApp
         </button>
+        <button id="mailBtn" class="leadSendBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>
+          Send via mail
+        </button>
         <div id="cartErr" class="err"></div>
-        <div id="cartTick" class="tick" style="display:none;"><span class="dot">v</span><span> Saved</span></div>
       </div>
     </div>
   </div>
@@ -549,6 +570,12 @@
     const PAGE_SIZE = 20;
     const CACHE_KEY = "sc_products_cache";
 
+    // Where a saved lead gets sent: WhatsApp to the shop number, or a mail draft to info@
+    // with the owners in cc.
+    const LEAD_WHATSAPP_PHONE = "31850481281";
+    const LEAD_MAIL_TO = "info@surfcenter.nl";
+    const LEAD_MAIL_CC = ["jelle@surfcenter.nl","harmen@surfcenter.nl","haico@surfcenter.nl"];
+
     const WAREHOUSE_KEYS = [
       "msi_F4_qty","msi_NP7_qty","msi_apm_qty","msi_boards-and-more_qty",
       "msi_coros_qty","msi_foxsports_qty","msi_h20_qty","msi_kubus_qty",
@@ -599,8 +626,24 @@
       return Number.isFinite(n)?n:null;
     }
 
-    function ownStock(r){ return toNum(r.msi_surfcenter_qty)??0; }
-    function warehouseStock(r){ return WAREHOUSE_KEYS.reduce((s,k)=>s+(toNum(r[k])??0),0); }
+    // Per-row values that never change after loading (stock totals, status, search text).
+    // Computed once per row and remembered, so typing in the search box doesn't redo the
+    // 17-warehouse sum for every product on every keystroke. A WeakMap keeps these out of
+    // the row objects themselves, so they never end up in the localStorage cache.
+    const _derived=new WeakMap();
+    function derived(r){
+      let d=_derived.get(r);
+      if(!d){
+        const own=toNum(r.msi_surfcenter_qty)??0;
+        const wh=WAREHOUSE_KEYS.reduce((s,k)=>s+(toNum(r[k])??0),0);
+        d={own, wh, status:own>0?"green":wh>0?"orange":"red", hay:((r.name||"")+" "+(r.ean_code||"")).toLowerCase()};
+        _derived.set(r,d);
+      }
+      return d;
+    }
+
+    function ownStock(r){ return derived(r).own; }
+    function warehouseStock(r){ return derived(r).wh; }
     function warehouseBreakdown(r){ return WAREHOUSE_KEYS.map(k=>({label:WAREHOUSE_LABELS[k]||k,qty:toNum(r[k])??0})).filter(x=>x.qty>0); }
     function productDetailsHtml(r,own){
       const bd=warehouseBreakdown(r);
@@ -631,7 +674,7 @@
       };
       return iBtn;
     }
-    function stockStatus(r){ if(ownStock(r)>0)return"green"; if(warehouseStock(r)>0)return"orange"; return"red"; }
+    function stockStatus(r){ return derived(r).status; }
     function statusRank(s){ return s==="green"?2:s==="orange"?1:0; }
     function dotClass(s){ return s==="green"?"dotGreen":s==="orange"?"dotOrange":"dotRed"; }
 
@@ -660,8 +703,9 @@
     const cartBtn=document.getElementById("cartBtn"),cartBar=document.getElementById("cartBar");
     const cartBarBtn=document.getElementById("cartBarBtn"),cartBarBadge=document.getElementById("cartBarBadge");
     const cartOverlay=document.getElementById("cartOverlay"),cartClose=document.getElementById("cartClose");
-    const cartListEl=document.getElementById("cartList"),cartErr=document.getElementById("cartErr"),cartTick=document.getElementById("cartTick");
-    const waBtn=document.getElementById("waBtn"),cartSaveBtn=document.getElementById("cartSaveBtn");
+    const cartListEl=document.getElementById("cartList"),cartErr=document.getElementById("cartErr");
+    const refreshBtn=document.getElementById("refreshBtn"),syncInfo=document.getElementById("syncInfo");
+    const waBtn=document.getElementById("waBtn"),mailBtn=document.getElementById("mailBtn"),cartSaveBtn=document.getElementById("cartSaveBtn");
     const custName=document.getElementById("custName"),phone=document.getElementById("phone"),mail=document.getElementById("mail"),note1=document.getElementById("note1");
     const accountOverlay=document.getElementById("accountOverlay"),accountClose=document.getElementById("accountClose");
     const accountTitle=document.getElementById("accountTitle"),accountSub=document.getElementById("accountSub");
@@ -698,13 +742,20 @@
     function filtersActive(){ const f=getFilters(); return f.q||f.category||f.supplier; }
 
     function matchesFilters(r,f){
-      if(f.q){ const tokens=f.q.split(/\s+/).filter(Boolean); const hay=((r.name||"")+" "+(r.ean_code||"")).toLowerCase(); if(!tokens.every(t=>hay.includes(t)))return false; }
+      if(f.q){ const tokens=f.q.split(/\s+/).filter(Boolean); const hay=derived(r).hay; if(!tokens.every(t=>hay.includes(t)))return false; }
       if(f.category&&(r._attribute_set||"")!==f.category)return false;
       if(f.supplier&&(r.manufacturer||"")!==f.supplier)return false;
       if(f.onlyLow){ const min=minStockMap[r.ean_code]||0; if(min<=0||ownStock(r)>=min)return false; }
       if(f.hasMin){ const min=minStockMap[r.ean_code]||0; if(min<=0)return false; }
       if(f.leverancier&&cartLeverancierKeyFor(r,warehouseStock(r))!==f.leverancier)return false;
       return true;
+    }
+
+    // allRows is already sorted once in applyData(), and filter() keeps that order,
+    // so no re-sort is needed per keystroke.
+    function filteredRows(){
+      const f=getFilters();
+      return allRows.filter(r=>matchesFilters(r,f));
     }
 
     function populateDropdowns(){
@@ -776,7 +827,14 @@
     // ---- Auth ----
     function showLogin(){ loginView.style.display="block"; appView.style.display="none"; cartBtn.style.display="none"; cartBar.style.display="none"; inkoopCartBtn.style.display="none"; inkoopCartBar.style.display="none"; mainOnlyLowWrap.style.display="none"; mainOnlyHasMinWrap.style.display="none"; filterLeverancier.style.display="none"; loadProgress.style.display="none"; selectAllTh.style.display="none"; loginErr.textContent=""; loginKey.value=""; loginKey.focus(); }
     function showApp(){ loginView.style.display="none"; appView.style.display="block"; cartBtn.style.display=""; cartBar.style.display=""; searchInput.disabled=false; filterCategory.disabled=false; filterSupplier.disabled=false; }
-    function logout(){ localStorage.removeItem("employeeKey"); currentKey=""; activeFetchKey=""; showLogin(); }
+    // Logging out also drops the stored catalog (it holds purchase prices), so a shared
+    // shop device doesn't keep it around for whoever picks it up next.
+    function logout(){
+      localStorage.removeItem("employeeKey"); clearCatalog();
+      currentKey=""; activeFetchKey=""; refreshSeq++; refreshing=false;
+      allRows=[]; dataTs=0; err.textContent=""; updateSyncInfo();
+      showLogin();
+    }
     logoutBtn.onclick=logout;
 
     // ---- Cart modal ----
@@ -789,8 +847,8 @@
     // (saveLeadForm/restoreLeadForm) is unrelated and still runs on every keystroke.
     function resetCartSaveState(){
       waBtn.style.display="none";
-      cartTick.style.display="none";
-      cartSaveBtn.style.display="";
+      mailBtn.style.display="none";
+      cartSaveBtn.classList.remove("btnSaved");
       cartSaveBtn.disabled=false; cartSaveBtn.textContent="Opslaan";
     }
     [custName,phone,mail,note1].forEach(el=>el.addEventListener("input",()=>{
@@ -814,29 +872,49 @@
         const payload={name,phoneNumber:p,mail:m,note1:n1,items:cart};
         const url=`${APPS_SCRIPT_WEBAPP_URL}?action=submitLead&key=${encodeURIComponent(currentKey)}&payload=${encodeURIComponent(JSON.stringify(payload))}`;
         await jsonp(url);
-        cartSaveBtn.style.display="none";
-        cartTick.style.display="";
+        cartSaveBtn.classList.add("btnSaved");
+        cartSaveBtn.innerHTML=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Opgeslagen`;
         waBtn.style.display="flex";
+        mailBtn.style.display="flex";
       }catch(e){
         cartErr.textContent="Opslaan mislukt, probeer opnieuw.";
         cartSaveBtn.disabled=false; cartSaveBtn.textContent="Opslaan";
       }
     };
 
-    waBtn.onclick=()=>{
+    // Same lead text for WhatsApp and mail; WhatsApp gets *bold* labels, mail stays plain.
+    function buildLeadMessage(forWhatsApp){
       const name=custName.value.trim(),p=phone.value.trim(),m=mail.value.trim(),n1=note1.value.trim();
-      let msg="*New lead - Surf Center*\n\n";
-      if(name) msg+=`*Name:* ${name}\n`;
-      if(p)    msg+=`*Phone:* ${p}\n`;
-      if(m)    msg+=`*Email:* ${m}\n`;
-      if(cart.length){ msg+=`\n*Products:*\n`; cart.forEach(it=>{ msg+=`- ${it.product}\n`; }); }
-      if(n1) msg+=`\n*Note:* ${n1}`;
-      const url=`https://wa.me/31683599751?text=${encodeURIComponent(msg.trim())}`;
-      window.open(url,"_blank");
+      const b=s=>forWhatsApp?`*${s}*`:s;
+      let msg=`${b("New lead - Surf Center")}\n\n`;
+      if(name) msg+=`${b("Name:")} ${name}\n`;
+      if(p)    msg+=`${b("Phone:")} ${p}\n`;
+      if(m)    msg+=`${b("Email:")} ${m}\n`;
+      if(cart.length){ msg+=`\n${b("Products:")}\n`; cart.forEach(it=>{ msg+=`- ${it.product}\n`; }); }
+      if(n1) msg+=`\n${b("Note:")} ${n1}`;
+      return msg.trim();
+    }
+
+    // Lead has been handed off (WhatsApp or mail): start fresh for the next customer.
+    function finishLead(){
       cart=[]; setCartBadge(); renderCart();
       custName.value=""; phone.value=""; mail.value=""; note1.value="";
       localStorage.removeItem(LEAD_CACHE);
       cartOverlay.classList.remove("active");
+    }
+
+    waBtn.onclick=()=>{
+      const url=`https://api.whatsapp.com/send/?phone=${LEAD_WHATSAPP_PHONE}&text=${encodeURIComponent(buildLeadMessage(true))}&type=phone_number&app_absent=0`;
+      window.open(url,"_blank");
+      finishLead();
+    };
+
+    mailBtn.onclick=()=>{
+      const name=custName.value.trim();
+      const subject=`New lead - Surf Center${name?" - "+name:""}`;
+      const cc=LEAD_MAIL_CC.map(encodeURIComponent).join(",");
+      window.location.href=`mailto:${LEAD_MAIL_TO}?cc=${cc}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(buildLeadMessage(false))}`;
+      finishLead();
     };
 
     // ---- Calculator modal ----
@@ -874,7 +952,7 @@
     }
 
     // ---- Products ----
-    function applyData(res, fromCache, opts){
+    function applyData(res, opts){
       err.textContent=""; // clear any stale error from an earlier failed attempt
       isAdmin=!!res.isAdmin;
       currentUserName=(res.user&&res.user.name)?res.user.name:"";
@@ -893,19 +971,10 @@
       selectAllTh.style.display=isInkoopRole?"":"none";
       const isPartial=!!(opts&&opts.partial);
       if(isInkoopRole && !isPartial){ loadMinStock(); loadLeveranciers(); }
-      allRows=Array.isArray(res.rows)?res.rows:[];
+      // Sort once here; every render after that just filters this already-ordered list.
+      allRows=(Array.isArray(res.rows)?res.rows:[]).slice().sort(sortRows);
 
       expanded.clear(); mobileExpanded.clear(); visibleCount=PAGE_SIZE;
-      if(isPartial){
-        const total=opts.total||allRows.length;
-        meta.textContent=`${allRows.length} of ${total} items (loading...)`;
-        loadProgress.style.display="block";
-        loadProgressBar.style.width=(total?Math.min(100,Math.round(allRows.length/total*100)):0)+"%";
-      } else {
-        meta.textContent=`${allRows.length} items`+(fromCache?" (cached)":"");
-        loadProgress.style.display="none";
-        loadProgressBar.style.width="0%";
-      }
       searchInput.disabled=false;
       populateDropdowns(); if(isInkoopRole) populateLeverancierDropdown(); updateActiveFilters(); renderProducts();
     }
@@ -940,51 +1009,118 @@
       return merged;
     }
 
-    const CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+    // ---- Catalog storage (IndexedDB) ----
+    // The full catalog outgrew localStorage (~5 MB cap): saving it then silently failed, so
+    // some devices kept showing an old or half-loaded list (e.g. stuck at 1499 items).
+    // IndexedDB has no such small limit. The catalog is loaded once, kept here, and only
+    // replaced when someone presses the refresh button.
+    const IDB_NAME="sc_store", IDB_STORE="kv";
+    let _idb=null;
+    function idbOpen(){
+      if(!_idb) _idb=new Promise((resolve,reject)=>{
+        const req=indexedDB.open(IDB_NAME,1);
+        req.onupgradeneeded=()=>req.result.createObjectStore(IDB_STORE);
+        req.onsuccess=()=>resolve(req.result);
+        req.onerror=()=>{ _idb=null; reject(req.error); };
+      });
+      return _idb;
+    }
+    function idbRun(mode,fn){
+      return idbOpen().then(db=>new Promise((resolve,reject)=>{
+        const tx=db.transaction(IDB_STORE,mode); const req=fn(tx.objectStore(IDB_STORE));
+        tx.oncomplete=()=>resolve(req.result); tx.onerror=()=>reject(tx.error); tx.onabort=()=>reject(tx.error);
+      }));
+    }
 
-    async function loadProducts(){
-      err.textContent="";
-      const cached=localStorage.getItem(CACHE_KEY);
-      let hasCache=false;
-      let cacheIsFresh=false;
-      if(cached){
-        try{
-          const c=JSON.parse(cached);
-          if(c.key===currentKey){
-            applyData(c.res,true);
-            hasCache=true;
-            if(c.ts && (Date.now()-c.ts)<CACHE_TTL_MS) cacheIsFresh=true;
-          }
-        }catch(e){}
-      }
-      if(!hasCache){
-        meta.textContent="Loading...";
-        tbody.innerHTML=`<tr><td colspan="5" class="small">Loading...</td></tr>`;
-        mobileProducts.innerHTML=`<div class="small">Loading...</div>`;
-      }
-      if(cacheIsFresh) return; // skip fetch, cache is recent enough
+    function saveCatalog(key,res,ts){
+      return idbRun("readwrite",s=>s.put({key,res,ts},CACHE_KEY)).catch(e=>console.warn("Catalogus niet opgeslagen:",e));
+    }
+    function clearCatalog(){
+      idbRun("readwrite",s=>s.delete(CACHE_KEY)).catch(()=>{});
+      try{ localStorage.removeItem(CACHE_KEY); }catch(e){}
+    }
+    async function loadCachedCatalog(key){
+      try{ const c=await idbRun("readonly",s=>s.get(CACHE_KEY)); if(c&&c.key===key&&c.res) return c; }catch(e){}
+      // One-time move of the old localStorage cache into IndexedDB, freeing that space.
       try{
-        const res=await jsonp(`${APPS_SCRIPT_WEBAPP_URL}?action=data&key=${encodeURIComponent(currentKey)}`);
-        if(!res||!res.ok)throw new Error(res?.error||"Could not load data");
-        localStorage.setItem(CACHE_KEY,JSON.stringify({key:currentKey,res,ts:Date.now()}));
-        applyData(res,false);
-      }catch(e){
-        if(!hasCache){
-          err.textContent=friendlyErrorMessage(e);
-          meta.textContent="";
-          tbody.innerHTML=`<tr><td colspan="5" class="small">Error loading.</td></tr>`;
-          mobileProducts.innerHTML=`<div class="small">Error loading.</div>`;
+        const raw=localStorage.getItem(CACHE_KEY);
+        if(raw){
+          localStorage.removeItem(CACHE_KEY);
+          const c=JSON.parse(raw);
+          if(c&&c.key===key&&c.res){ saveCatalog(key,c.res,c.ts||0); return c; }
         }
+      }catch(e){}
+      return null;
+    }
+
+    // ---- Refresh ----
+    let dataTs=0, refreshing=false, refreshSeq=0;
+    function fmtUpdated(ts){
+      return new Date(ts).toLocaleString("nl-NL",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+    }
+    function updateSyncInfo(progressText){
+      syncInfo.textContent=refreshing?(progressText||"Vernieuwen..."):(dataTs?`Bijgewerkt ${fmtUpdated(dataTs)}`:"");
+      refreshBtn.disabled=refreshing;
+      refreshBtn.classList.toggle("spinning",refreshing);
+    }
+
+    // Loads the full catalog from the server. With products already on screen (refresh
+    // button) the old list stays put until every page is in and is then swapped in one
+    // go, so a page failing halfway can't leave anyone stuck on a partial count. With
+    // nothing on screen yet (first load) pages render as they arrive.
+    async function refreshCatalog(key,opts){
+      const seq=++refreshSeq;
+      const isCurrent=()=>seq===refreshSeq&&key===activeFetchKey;
+      const showPartials=!allRows.length;
+      refreshing=true; updateSyncInfo();
+      loadProgressBar.style.width="0%"; loadProgress.style.display="block";
+      try{
+        const res=await fetchAllData(key,(partial,total,hasMore)=>{
+          if(!isCurrent()) return;
+          if(opts&&opts.onFirstPage) opts.onFirstPage();
+          const n=partial.rows.length;
+          loadProgressBar.style.width=(total?Math.min(100,Math.round(n/total*100)):0)+"%";
+          updateSyncInfo(`Vernieuwen... ${n} van ${total}`);
+          if(showPartials&&hasMore) applyData(partial,{partial:true});
+        });
+        if(!isCurrent()) return;
+        dataTs=Date.now();
+        saveCatalog(key,res,dataTs);
+        err.textContent="";
+        applyData(res);
+      }finally{
+        if(isCurrent()){ refreshing=false; loadProgress.style.display="none"; updateSyncInfo(); }
       }
     }
+
+    function showLoadError(e){
+      if(allRows.length){
+        // Keep showing what we have; just say it isn't the latest.
+        err.textContent=dataTs
+          ? `Vernieuwen mislukt. Je ziet de producten van ${fmtUpdated(dataTs)}. Probeer het opnieuw met de vernieuwknop.`
+          : "Niet alle producten zijn geladen. Probeer het opnieuw met de vernieuwknop.";
+      } else {
+        err.textContent=friendlyErrorMessage(e); meta.textContent="";
+        tbody.innerHTML=`<tr><td colspan="5" class="small">Error loading.</td></tr>`;
+        mobileProducts.innerHTML=`<div class="small">Error loading.</div>`;
+      }
+    }
+
+    refreshBtn.onclick=()=>{
+      if(refreshing||!currentKey) return;
+      const key=currentKey;
+      err.textContent="";
+      refreshCatalog(key).catch(e=>{ if(key===activeFetchKey) showLoadError(e); });
+    };
 
     // ---- Render ----
     function renderProducts(){
       const f=getFilters();
-      const allFiltered=[...allRows.filter(r=>matchesFilters(r,f))].sort(sortRows);
+      const allFiltered=filteredRows();
       const total=allFiltered.length;
       const rows=allFiltered.slice(0,visibleCount);
       const colCount=isInkoopRole?6:5;
+      const inkoopEans=new Set(inkoopCart.map(x=>x.ean));
 
       meta.textContent=(f.category||f.supplier||f.q)?`${total} of ${allRows.length} items`:`${allRows.length} items`;
 
@@ -997,7 +1133,7 @@
           const id=`${r.ean_code}__${i}`,own=ownStock(r),wh=warehouseStock(r),tot=own+wh,dc=dotClass(stockStatus(r));
           const tr=document.createElement("tr");
           const min=minStockMap[r.ean_code]||0;
-          const inCart=isInkoopRole&&inkoopCart.some(x=>x.ean===r.ean_code);
+          const inCart=isInkoopRole&&inkoopEans.has(r.ean_code);
           if(isInkoopRole){
             // Checkbox doubles as the add/remove-from-order control: checked = in the
             // bestelling. Bulk-select with "Alles selecteren" then untick the odd one out.
@@ -1066,7 +1202,7 @@
         const bd=warehouseBreakdown(r);
         const whD=bd.map(x=>`<div class="whLine">${esc(x.label)}: ${x.qty}</div>`).join("");
         const min=minStockMap[r.ean_code]||0;
-        const inCart=inkoopCart.some(x=>x.ean===r.ean_code);
+        const inCart=inkoopEans.has(r.ean_code);
         const addBtnHtml=isInkoopRole
           ? `<button class="pIconBtn${inCart?" pIconBtnPrimary":""}" data-add="${id}" title="Toevoegen aan bestelling"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${inCart?"white":"#111"}" stroke-width="3" stroke-linecap="round">${inCart?'<polyline points="20 6 9 17 4 12"/>':'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'}</svg></button>`
           : `<button class="pIconBtn pIconBtnPrimary" data-add="${id}" title="Add"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`;
@@ -1197,12 +1333,11 @@
 
     // Same rows renderProducts() would show right now, for the header checkbox to act on.
     function currentlyRenderedRows(){
-      const f=getFilters();
-      return [...allRows.filter(r=>matchesFilters(r,f))].sort(sortRows).slice(0,visibleCount);
+      return filteredRows().slice(0,visibleCount);
     }
 
     // Header checkbox: exact same logic as a row checkbox, just applied to every row
-    // currently on screen at once — check to bulk-add, uncheck to bulk-remove.
+    // currently on screen at once ‚Äî check to bulk-add, uncheck to bulk-remove.
     selectAllCheckbox.addEventListener("change",()=>{
       // Decide the direction from the actual cart state, not selectAllCheckbox.checked:
       // browsers always flip an indeterminate checkbox to checked on click, so relying on
@@ -1369,80 +1504,39 @@
       if(!key){loginErr.textContent="Please enter a key.";return;}
       loginBtn.disabled=true; loginBtn.textContent="Login...";
       activeFetchKey=key; // supersede any still-running fetch for a previous session
+      allRows=[]; dataTs=0;
       let entered=false;
+      const enter=()=>{
+        if(entered||key!==activeFetchKey) return;
+        entered=true;
+        localStorage.setItem("employeeKey",key); currentKey=key;
+        showApp(); setCartBadge();
+      };
       try{
-        const res=await fetchAllData(key,(partial,total,hasMore)=>{
-          if(key!==activeFetchKey) return;
-          if(!entered){
-            entered=true;
-            localStorage.setItem("employeeKey",key); currentKey=key;
-            showApp(); setCartBadge();
-          }
-          applyData(partial,false,{partial:hasMore,total});
-        });
+        await refreshCatalog(key,{onFirstPage:enter});
+        enter();
+      }catch(e){
         if(key!==activeFetchKey) return;
-        localStorage.setItem(CACHE_KEY,JSON.stringify({key,res,ts:Date.now()}));
-        applyData(res,false);
-      }catch(e){ if(key===activeFetchKey) loginErr.textContent=friendlyErrorMessage(e); }
+        if(entered) showLoadError(e); else loginErr.textContent=friendlyErrorMessage(e);
+      }
       finally{ loginBtn.disabled=false; loginBtn.textContent="Login"; }
     };
 
-    // ---- Auto-login ----
-    // Kick off the batched data fetch immediately (before DOMContentLoaded) to reduce cold-start wait.
-    // Partial batches are buffered until the DOM is ready, then applied.
-    let _earlyFetch=null, _earlyPartial=null, _earlyKey="";
-    {
-      const _k=(localStorage.getItem("employeeKey")||"").trim();
-      if(_k){
-        _earlyKey=_k; activeFetchKey=_k;
-        _earlyFetch=fetchAllData(_k,(partial,total,hasMore)=>{
-          if(_k!==activeFetchKey) return; // a login/logout has since taken over
-          _earlyPartial={partial,total,hasMore};
-          if(document.readyState!=="loading") applyData(partial,false,{partial:hasMore,total});
-        });
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded",()=>{
+    // ---- Opening the app ----
+    // Always show the stored catalog straight away, and don't fetch again on its own: the
+    // catalog only loads from the server the very first time on a device, or when someone
+    // presses the refresh button.
+    document.addEventListener("DOMContentLoaded",async()=>{
       const stored=(localStorage.getItem("employeeKey")||"").trim();
       if(!stored){showLogin();return;}
-      currentKey=stored;
-      // The early fetch above only still applies if nothing logged out/in since it started.
-      if(stored===_earlyKey) activeFetchKey=stored; else { activeFetchKey=stored; _earlyFetch=null; _earlyPartial=null; }
-      showApp(); setCartBadge();
-      // Reuse already-in-flight fetch instead of starting a new one
-      const cached=localStorage.getItem(CACHE_KEY);
-      let cacheIsFresh=false;
-      if(cached){
-        try{
-          const c=JSON.parse(cached);
-          if(c.key===currentKey){applyData(c.res,true); if(c.ts&&(Date.now()-c.ts)<CACHE_TTL_MS)cacheIsFresh=true;}
-        }catch(e){}
-      }
-      if(cacheIsFresh){_earlyFetch=null;return;}
-      if(!cached) { meta.textContent="Loading..."; tbody.innerHTML=`<tr><td colspan="5" class="small">Loading...</td></tr>`; mobileProducts.innerHTML=`<div class="small">Loading...</div>`; }
-      if(_earlyPartial) applyData(_earlyPartial.partial,false,{partial:_earlyPartial.hasMore,total:_earlyPartial.total});
-      (_earlyFetch||fetchAllData(currentKey,(partial,total,hasMore)=>{
-        if(currentKey!==activeFetchKey) return;
-        applyData(partial,false,{partial:hasMore,total});
-      }))
-        .then(res=>{
-          if(currentKey!==activeFetchKey) return;
-          localStorage.setItem(CACHE_KEY,JSON.stringify({key:currentKey,res,ts:Date.now()}));
-          applyData(res,false);
-        })
-        .catch(e=>{
-          if(currentKey!==activeFetchKey) return;
-          // Products already on screen (from earlier pages / cache): a later page failing
-          // isn't worth alarming staff over mid-shift, so stay quiet and just log it.
-          if(allRows.length){
-            console.warn("Kon niet alle pagina's laden:", e);
-            loadProgress.style.display="none";
-          } else {
-            err.textContent=friendlyErrorMessage(e); meta.textContent=""; loadProgress.style.display="none"; tbody.innerHTML=`<tr><td colspan="5" class="small">Error loading.</td></tr>`; mobileProducts.innerHTML=`<div class="small">Error loading.</div>`;
-          }
-        })
-        .finally(()=>{ _earlyFetch=null; });
+      currentKey=stored; activeFetchKey=stored;
+      showApp(); setCartBadge(); updateSyncInfo();
+      const cached=await loadCachedCatalog(stored);
+      if(stored!==activeFetchKey) return; // logged out/in while reading storage
+      if(cached){ dataTs=cached.ts||0; applyData(cached.res); updateSyncInfo(); return; }
+      meta.textContent="Loading..."; tbody.innerHTML=`<tr><td colspan="5" class="small">Loading...</td></tr>`; mobileProducts.innerHTML=`<div class="small">Loading...</div>`;
+      try{ await refreshCatalog(stored); }
+      catch(e){ if(stored===activeFetchKey) showLoadError(e); }
     });
   </script>
 </body>
