@@ -480,10 +480,10 @@
       </div>
       <div class="modalBody">
         <div class="formGrid">
-          <div class="field"><label>Name</label><input id="custName" placeholder="Name"></div>
-          <div class="field"><label>Phone number</label><input id="phone" placeholder="Phone number" inputmode="tel"></div>
-          <div class="field"><label>Email</label><input id="mail" placeholder="Email" inputmode="email"></div>
-          <div class="field"><label>Note</label><textarea id="note1" placeholder="Note"></textarea></div>
+          <div class="field"><label>Name</label><input id="custName" placeholder="Name" autocomplete="off"></div>
+          <div class="field"><label>Phone number</label><input id="phone" placeholder="Phone number" inputmode="tel" autocomplete="off"></div>
+          <div class="field"><label>Email</label><input id="mail" placeholder="Email" inputmode="email" autocomplete="off"></div>
+          <div class="field"><label>Note</label><textarea id="note1" placeholder="Note" autocomplete="off"></textarea></div>
         </div>
         <div style="margin-top:14px; font-weight:700;">Items:</div>
         <div id="cartList" class="cartList"></div>
@@ -847,13 +847,12 @@
     logoutBtn.onclick=logout;
 
     // ---- Cart modal ----
-    const LEAD_CACHE="sc_lead_form";
-    function saveLeadForm(){ localStorage.setItem(LEAD_CACHE,JSON.stringify({name:custName.value,phone:phone.value,mail:mail.value,note:note1.value})); }
-    function restoreLeadForm(){ try{ const d=JSON.parse(localStorage.getItem(LEAD_CACHE)||"{}"); if(d.name)custName.value=d.name; if(d.phone)phone.value=d.phone; if(d.mail)mail.value=d.mail; if(d.note)note1.value=d.note; }catch(e){} }
+    // The lead form always starts empty: no stored draft from a previous customer.
+    // Drop any draft an older version of this page left behind.
+    try{ localStorage.removeItem("sc_lead_form"); }catch(e){}
 
     // No more silent autosave-to-sheet while typing: the customer lead is only written
-    // to the sheet once the user explicitly clicks "Opslaan". Local draft persistence
-    // (saveLeadForm/restoreLeadForm) is unrelated and still runs on every keystroke.
+    // to the sheet once the user explicitly clicks "Opslaan".
     function resetCartSaveState(){
       waBtn.style.display="none";
       mailBtn.style.display="none";
@@ -861,11 +860,10 @@
       cartSaveBtn.disabled=false; cartSaveBtn.textContent="Opslaan";
     }
     [custName,phone,mail,note1].forEach(el=>el.addEventListener("input",()=>{
-      saveLeadForm();
       if(waBtn.style.display!=="none") resetCartSaveState(); // edited after saving: must save again
     }));
 
-    function openCart(){ cartErr.textContent=""; resetCartSaveState(); restoreLeadForm(); renderCart(); cartOverlay.classList.add("active"); }
+    function openCart(){ cartErr.textContent=""; resetCartSaveState(); renderCart(); cartOverlay.classList.add("active"); }
     function closeCart(){ cartOverlay.classList.remove("active"); }
     cartBtn.onclick=openCart; cartBarBtn.onclick=openCart; cartClose.onclick=closeCart;
     cartOverlay.addEventListener("click",e=>{ if(e.target===cartOverlay)closeCart(); });
@@ -874,7 +872,6 @@
       const name=custName.value.trim(),p=phone.value.trim(),m=mail.value.trim(),n1=note1.value.trim();
       if(!name){cartErr.textContent="Name is required.";return;}
       if(!p&&!m){cartErr.textContent="Phone number or email is required.";return;}
-      if(!cart.length){cartErr.textContent="No items added.";return;}
       cartErr.textContent="";
       cartSaveBtn.disabled=true; cartSaveBtn.textContent="Opslaan...";
       try{
@@ -908,7 +905,6 @@
     function finishLead(){
       cart=[]; setCartBadge(); renderCart();
       custName.value=""; phone.value=""; mail.value=""; note1.value="";
-      localStorage.removeItem(LEAD_CACHE);
       cartOverlay.classList.remove("active");
     }
 
